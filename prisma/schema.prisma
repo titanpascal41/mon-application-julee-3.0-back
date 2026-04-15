@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  prenom      String
+  nom         String
+  email       String  @unique
+  motDePasse  String
+  profilId    Int
+  demandes    Demande[]
+  userPermissions UserPermission[]
+  profil      Profil  @relation(fields: [profilId], references: [id])
+
+  @@map("users")
+}
+
+model Profil {
+  id                  Int      @id @default(autoincrement())
+  code                String?  @unique
+  nom                 String   @unique
+  permissions         Json?    // [{"module":"administration","submodule":"profils","access":true,"create":false,"read":true,"update":false,"delete":false}]
+  actif               Boolean  @default(true)
+  motifDesactivation  String?
+  dateCreation        DateTime @default(now())
+  dateModification    DateTime @updatedAt
+  users               User[]
+
+  @@map("profils")
+}
+
+model UserPermission {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  module           String                // administration, parametrage, demandes, etc.
+  submodule        String?               // profils, utilisateurs, societes, etc.
+  access           Boolean  @default(false)
+  create           Boolean  @default(false)
+  read             Boolean  @default(true)
+  update           Boolean  @default(false)
+  delete           Boolean  @default(false)
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_permissions")
+}
+
+model Societe {
+  id               Int      @id @default(autoincrement())
+  code             String
+  nom              String
+  departement      String?
+  actif            Boolean  @default(true)
+  source           String   @default("creee") // "creee" | "ajoutee"
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+  demandes         Demande[]
+  @@map("societes")
+}
+
+model Statut {
+  id               Int      @id @default(autoincrement())
+  nom              String   @unique
+  description      String?
+  actif            Boolean  @default(true)
+  estAutomatique   Boolean  @default(false)
+  ordre            Int      @default(0)
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+  demandes         Demande[]
+
+  @@map("statuts")
+}
+
+model Interlocuteur {
+  id               Int      @id @default(autoincrement())
+  nom              String
+  email            String   @unique
+  poste            String?
+  telephone        String?
+  actif            Boolean  @default(true)
+  structureUO      String?
+  uoId             Int?
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+  demandes         Demande[]
+  @@map("interlocuteurs")
+}
+
+
+
+model Ressource {
+  id               Int      @id @default(autoincrement())
+  nom              String
+  type             String
+  disponibiliteHJ  Float
+  tauxJournalier   Float
+  actif            Boolean  @default(true)
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+
+  @@map("ressources")
+}
+
+
+model UniteOrganisationnelle {
+  id            Int     @id @default(autoincrement())
+  code          String?
+  nom           String
+  departement   String?
+  chefUO        String
+  actif         Boolean @default(true)
+  societeId     Int?
+  projetSoumis  String?
+  demandes      Demande[]
+
+  @@map("unites_organisationnelles")
+}
+
+
+model Demande {
+  id                    Int      @id @default(autoincrement())
+  
+  // Étape 1: Enregistrement de la demande
+  dateEnregistrement    DateTime @default(now())
+  demandeur             String?
+  societesDemandeurs    String? // Noms des sociétés séparées par des virgules (nouvelle demande)
+  societeDemandeur      String? // Nom de la société (evolution/prospecte)
+  interlocuteurClient   String? // Interlocuteur (nouvelle demande)
+  interlocuteur         String? // Interlocuteur (evolution/prospecte)
+  typeProjet            String
+  nomProjet             String
+  descriptionProjet     String?
+  descriptionPerimetre  String?
+  statutDemande         String?
+  dateReception         DateTime?
+  lienIngridCDC         String?  // Ajouté pour le lien Ingrid CDC
+  
+  // Étape 2: Clarification de la demande
+  dateTransmissionBacklog       DateTime?
+  dateConfirmationValidation   DateTime?
+  
+  // Étape 3: Planification du périmètre
+  dateDemandePlanificationDev   DateTime?
+  dateDemandePlanificationTif   DateTime?
+  dateRetourEquipesDev          DateTime?
+  dateRetourEquipesTif          DateTime?
+  dateCommunicationPlanningClient DateTime?
+  nombreSprint                 Int?
+  chargePrevisionnelleParSprint Json?    // [{sprint: 1, charge: 40}]
+  dateLivraisonPrevisionnelleTIFParSprint Json? // [{sprint: 1, date: "2024-01-15"}]
+  dateLivraisonPrevisionnelleClientParSprint Json? // [{sprint: 1, date: "2024-01-20"}]
+  roadmap                      String?
+  dateEffectiveLivraisonTIF     DateTime?
+  motifsRetardTIF              String?
+  dateEffectiveLivraisonClient DateTime?
+  motifsRetardClient           String?
+  
+  // Étape 4: Codage de l'application
+  statutCodage                 String   @default("en attente")
+  
+  // Étape 5: Présentation des documents
+  lienIngridKickoff            String?
+  lienIngridPointsControleTIF   String?
+  lienIngridSignoff             String?
+  statutPresentationDocs       String   @default("en attente")
+  
+  // Étape 6: Recette
+  statutTIF                    String   @default("en attente")
+  statutRecette                String   @default("en attente")
+  
+  // Étape 7: Livraison
+  statutLivraison              String   @default("en attente")
+  
+  // Suspension
+  motifSuspension              String?
+  dateSuspension               DateTime?
+
+  // Métadonnées pour brouillons
+  isDraft                      Boolean  @default(false)
+  draftStep                    Int?
+  draftStepLabel               String?
+  
+  // Jointures
+  societeId                    Int?
+  uniteOrganisationnelleId     Int?
+  statutId                     Int?
+  interlocuteurIds            Json? // Tableau d'IDs des interlocuteurs en format JSON [1, 2, 3]
+  utilisateurId               Int? // ID de l'utilisateur qui a créé la demande
+  sprintsData                 Json? // [{sprint:1, chantier:"", datePrevTIF:"", dateEffTIF:"", motifRetardTIF:"", datePrevClient:"", dateEffClient:"", motifRetardClient:"", charges:"", nbFonctionnalites:""}]
+  
+  // Relations
+  societe                      Societe? @relation(fields: [societeId], references: [id])
+  uniteOrganisationnelle       UniteOrganisationnelle? @relation(fields: [uniteOrganisationnelleId], references: [id])
+  statut                       Statut? @relation(fields: [statutId], references: [id])
+  utilisateur                 User? @relation(fields: [utilisateurId], references: [id])
+  interlocuteurs              Interlocuteur[]
+  
+  // Timestamps
+  dateCreation                 DateTime @default(now())
+  dateModification             DateTime @updatedAt
+  
+  @@map("demandes")
+}
+
+model AuditLog {
+  id              Int      @id @default(autoincrement())
+  action          String   // "CREATION" | "MODIFICATION" | "SUPPRESSION"
+  entite          String   // "Demande" | "Société" | "UO" | "Statut" | "Interlocuteur" | "Profil" | "Utilisateur"
+  entiteId        Int?
+  entiteNom       String?
+  details         Json?
+  utilisateurId   Int?
+  date            DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model AuditSuppression {
+  id               Int      @id @default(autoincrement())
+  demandeId        Int      @unique
+  nomProjet        String?
+  typeProjet       String?
+  societesDemandeurs String?
+  interlocuteurClient String?
+  dateEnregistrement DateTime?
+  statutDemande    String?
+  draftStep        Int?
+  draftStepLabel   String?
+  donneesCompletes Json?
+  supprimePar      Int?
+  suppressionDate  DateTime @default(now())
+
+  @@map("audit_suppressions")
+}
+
