@@ -84,7 +84,6 @@ model Interlocuteur {
   id               Int      @id @default(autoincrement())
   nom              String
   email            String   @unique
-  poste            String?
   telephone        String?
   actif            Boolean  @default(true)
   structureUO      String?
@@ -140,6 +139,7 @@ model Demande {
   nomProjet             String
   descriptionProjet     String?
   descriptionPerimetre  String?
+  perimetre             String?
   statutDemande         String?
   dateReception         DateTime?
   lienIngridCDC         String?  // Ajouté pour le lien Ingrid CDC
@@ -155,9 +155,6 @@ model Demande {
   dateRetourEquipesTif          DateTime?
   dateCommunicationPlanningClient DateTime?
   nombreSprint                 Int?
-  chargePrevisionnelleParSprint Json?    // [{sprint: 1, charge: 40}]
-  dateLivraisonPrevisionnelleTIFParSprint Json? // [{sprint: 1, date: "2024-01-15"}]
-  dateLivraisonPrevisionnelleClientParSprint Json? // [{sprint: 1, date: "2024-01-20"}]
   roadmap                      String?
   dateEffectiveLivraisonTIF     DateTime?
   motifsRetardTIF              String?

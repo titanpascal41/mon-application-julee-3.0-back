@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db";
+import { logAudit } from "../utils/auditHelper";
 
 const router = Router();
 
@@ -135,9 +136,6 @@ router.post("/", async (req, res) => {
       dateRetourEquipesTif,
       dateCommunicationPlanningClient,
       nombreSprint,
-      chargePrevisionnelleParSprint,
-      dateLivraisonPrevisionnelleTIFParSprint,
-      dateLivraisonPrevisionnelleClientParSprint,
       roadmap,
       dateEffectiveLivraisonTIF,
       motifsRetardTIF,
@@ -284,6 +282,20 @@ router.post("/", async (req, res) => {
     });
 
     console.log("✅ Demande créée avec dateReception:", demande.dateReception);
+
+    await logAudit({
+      action: "CREATION",
+      entite: "Demande",
+      entiteId: demande.id,
+      entiteNom: demande.nomProjet,
+      details: {
+        typeProjet: demande.typeProjet,
+        brouillon: demande.isDraft ? "Oui" : "Non",
+        etape: demande.draftStepLabel || "Étape 1",
+      },
+      utilisateurId: finalUtilisateurId || null,
+    });
+
     res.status(201).json(demande);
   } catch (error) {
     console.error("Erreur lors de la création de la demande:", error);
@@ -320,9 +332,6 @@ router.put("/:id", async (req, res) => {
       dateRetourEquipesTif,
       dateCommunicationPlanningClient,
       nombreSprint,
-      chargePrevisionnelleParSprint,
-      dateLivraisonPrevisionnelleTIFParSprint,
-      dateLivraisonPrevisionnelleClientParSprint,
       roadmap,
       dateEffectiveLivraisonTIF,
       motifsRetardTIF,
@@ -449,9 +458,6 @@ router.put("/:id", async (req, res) => {
         ...(nombreSprint !== undefined && nombreSprint !== null && {
           nombreSprint: nombreSprint ? parseInt(nombreSprint) : null,
         }),
-        ...(chargePrevisionnelleParSprint !== undefined && chargePrevisionnelleParSprint !== null && { chargePrevisionnelleParSprint }),
-        ...(dateLivraisonPrevisionnelleTIFParSprint !== undefined && dateLivraisonPrevisionnelleTIFParSprint !== null && { dateLivraisonPrevisionnelleTIFParSprint }),
-        ...(dateLivraisonPrevisionnelleClientParSprint !== undefined && dateLivraisonPrevisionnelleClientParSprint !== null && { dateLivraisonPrevisionnelleClientParSprint }),
         ...(roadmap !== undefined && roadmap !== null && { roadmap }),
         ...(dateEffectiveLivraisonTIF !== undefined && dateEffectiveLivraisonTIF !== null && {
           dateEffectiveLivraisonTIF: new Date(dateEffectiveLivraisonTIF),
@@ -475,6 +481,20 @@ router.put("/:id", async (req, res) => {
         dateModification: new Date(),
       },
     });
+    await logAudit({
+      action: "MODIFICATION",
+      entite: "Demande",
+      entiteId: demande.id,
+      entiteNom: demande.nomProjet,
+      details: {
+        typeProjet: demande.typeProjet,
+        brouillon: demande.isDraft ? "Oui" : "Non",
+        etape: demande.draftStepLabel || null,
+        statut: demande.statutDemande || null,
+      },
+      utilisateurId: demande.utilisateurId || null,
+    });
+
     res.json(demande);
   } catch (error) {
     console.error("Erreur lors de la mise à jour de la demande:", error);
@@ -526,6 +546,19 @@ router.delete("/:id", async (req, res) => {
         donneesCompletes: demande as any,
         supprimePar,
       },
+    });
+
+    await logAudit({
+      action: "SUPPRESSION",
+      entite: "Demande",
+      entiteId: demandeId,
+      entiteNom: demande.nomProjet,
+      details: {
+        typeProjet: demande.typeProjet,
+        societes: demande.societesDemandeurs || null,
+        statut: demande.statutDemande || null,
+      },
+      utilisateurId: supprimePar,
     });
 
     // Supprimer la demande
