@@ -1,4 +1,5 @@
 import { prisma } from './db';
+import bcrypt from 'bcrypt';
 
 export async function seedAdminUser() {
   try {
@@ -33,12 +34,13 @@ export async function seedAdminUser() {
     // Créer l'utilisateur admin
     console.log('➕ Création de l\'utilisateur admin...');
     
+    const hashedPassword = await bcrypt.hash('JuleeAdmin@2024!', 10);
     const adminUser = await prisma.user.create({
       data: {
         prenom: 'Admin',
         nom: 'Julee',
         email: 'admin@julee.local',
-        motDePasse: 'JuleeAdmin@2024!', // Mot de passe en clair (comme dans le code existant)
+        motDePasse: hashedPassword,
         profilId: adminProfil.id
       }
     });
@@ -91,10 +93,8 @@ export async function seedAdminUser() {
       }
     }
 
-    console.log(' Permissions admin attribuées avec succès !');
-    console.log(' Utilisateur admin prêt à l\'emploi !');
-    console.log(' Email: admin@julee.local');
-    console.log(' Mot de passe: JuleeAdmin@2024!');
+    console.log('✅ Permissions admin attribuées avec succès !');
+    console.log('✅ Utilisateur admin prêt à l\'emploi !');
 
   } catch (error) {
     console.error('❌ Erreur lors de la création de l\'admin:', error);

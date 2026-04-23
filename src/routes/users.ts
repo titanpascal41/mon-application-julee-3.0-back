@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { prisma } from "../db";
-import { logAudit } from "../utils/auditHelper";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { requireAuth, JWT_SECRET } from "../middleware/auth";
+
+const SALT_ROUNDS = 10;
 
 const router = Router();
 
@@ -25,16 +29,21 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
-    // Vérifier le mot de passe (simple pour l'instant)
-    if (utilisateur.motDePasse !== motDePasse) {
-      console.log("Mot de passe incorrect");
+    // Vérifier le mot de passe avec bcrypt
+    const passwordMatch = await bcrypt.compare(motDePasse, utilisateur.motDePasse);
+    if (!passwordMatch) {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
-    // Retourner l'utilisateur sans le mot de passe (avec le profil)
     const { motDePasse: _, ...utilisateurSansPassword } = utilisateur;
 
-    res.status(200).json(utilisateurSansPassword);
+    const token = jwt.sign(
+      { userId: utilisateur.id, email: utilisateur.email, profilNom: utilisateur.profil?.nom },
+      JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
+    res.status(200).json({ token, utilisateur: utilisateurSansPassword });
   } catch (error) {
     console.error("Erreur de connexion:", error);
     res.status(500).json({ error: "Erreur serveur" });
@@ -42,7 +51,7 @@ router.post("/login", async (req, res) => {
 });
 
 // Récupérer un utilisateur avec son profil (pour la session)
-router.get("/:id/profile", async (req, res) => {
+router.get("/:id/profile", requireAuth, async (req, res) => {
   try {
     const utilisateur = await prisma.user.findUnique({
       where: { id: parseInt(req.params.id) },
@@ -58,7 +67,7 @@ router.get("/:id/profile", async (req, res) => {
 });
 
 // Récupérer tous les utilisateurs (sauf admin)
-router.get("/", async (req, res) => {
+router.get("/", requireAuth, async (_req, res) => {
   try {
     const utilisateurs = await prisma.user.findMany({
       where: {
@@ -82,7 +91,7 @@ router.get("/", async (req, res) => {
 });
 
 // Créer un nouvel utilisateur
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   try {
     const { nom, prenom, email, motDePasse, profilId } =
       req.body;
@@ -103,13 +112,13 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Cet email est déjà utilisé" });
     }
 
-    // Créer l'utilisateur (mot de passe stocké en clair pour l'instant)
+    const hashedPassword = await bcrypt.hash(motDePasse, SALT_ROUNDS);
     const utilisateur = await prisma.user.create({
       data: {
         nom: nom.trim(),
         prenom: prenom.trim(),
         email: email.toLowerCase().trim(),
-        motDePasse: motDePasse, // Stocké en clair
+        motDePasse: hashedPassword,
         profilId: parseInt(profilId),
       },
     });
@@ -125,7 +134,7 @@ router.post("/", async (req, res) => {
 });
 
 // Mettre à jour un utilisateur
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { nom, prenom, email, motDePasse, profilId } =
@@ -159,9 +168,9 @@ router.put("/:id", async (req, res) => {
       profilId: profilId ? parseInt(profilId) : existingUser.profilId,
     };
 
-    // Ajouter le mot de passe seulement s'il est fourni
+    // Hasher le mot de passe seulement s'il est fourni
     if (motDePasse) {
-      updateData.motDePasse = motDePasse;
+      updateData.motDePasse = await bcrypt.hash(motDePasse, SALT_ROUNDS);
     }
 
     const utilisateur = await prisma.user.update({
@@ -180,7 +189,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Supprimer un utilisateur
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 

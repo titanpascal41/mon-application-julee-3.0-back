@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
     return res.json(societes);
   } catch (error) {
     console.error("Erreur SELECT societes:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération des sociétés", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération des sociétés", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -61,7 +61,7 @@ router.patch("/:id", async (req, res) => {
     return res.json(societe);
   } catch (error) {
     console.error("Erreur PATCH societe:", error);
-    return res.status(500).json({ message: "Erreur lors de la mise à jour de la société", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la mise à jour de la société", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -73,12 +73,12 @@ router.get("/:id", async (req, res) => {
       where: { id: parseInt(id) }
     });
     if (!societe) {
-      return res.status(404).json({ message: "Société non trouvée" });
+      return res.status(404).json({ error: "Société non trouvée" });
     }
     return res.json(societe);
   } catch (error) {
     console.error("Erreur SELECT societe:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération de la société", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération de la société", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -88,10 +88,10 @@ router.post("/", async (req, res) => {
     const { code, nom, departement, source } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le libellé de la société est requis" });
+      return res.status(400).json({ error: "Le libellé de la société est requis" });
     }
     if (!code || !code.trim()) {
-      return res.status(400).json({ message: "Le code de la société est requis" });
+      return res.status(400).json({ error: "Le code de la société est requis" });
     }
 
     const codeUp = code.trim().toUpperCase();
@@ -100,7 +100,7 @@ router.post("/", async (req, res) => {
       where: { code: codeUp, departement: dept }
     });
     if (doublon) {
-      return res.status(409).json({ message: `La société "${codeUp}"${dept ? ` (${dept})` : ""} existe déjà.` });
+      return res.status(409).json({ error: `La société "${codeUp}"${dept ? ` (${dept})` : ""} existe déjà.` });
     }
 
     const societe = await prisma.societe.create({
@@ -125,7 +125,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json(societe);
   } catch (error) {
     console.error("Erreur INSERT societe:", error);
-    return res.status(500).json({ message: "Erreur lors de la création de la société", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la création de la société", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -136,10 +136,10 @@ router.put("/:id", async (req, res) => {
     const { code, nom, departement } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le libellé de la société est requis" });
+      return res.status(400).json({ error: "Le libellé de la société est requis" });
     }
     if (!code || !code.trim()) {
-      return res.status(400).json({ message: "Le code de la société est requis" });
+      return res.status(400).json({ error: "Le code de la société est requis" });
     }
 
     const societe = await prisma.societe.update({
@@ -162,7 +162,7 @@ router.put("/:id", async (req, res) => {
     return res.json(societe);
   } catch (error) {
     console.error("Erreur UPDATE societe:", error);
-    return res.status(500).json({ message: "Erreur lors de la mise à jour de la société", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la mise à jour de la société", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -182,7 +182,7 @@ router.delete("/:id", async (req, res) => {
     return res.json({ message: "Société supprimée" });
   } catch (error) {
     console.error("Erreur DELETE societe:", error);
-    return res.status(500).json({ message: "Erreur lors de la suppression de la société", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la suppression de la société", error: error instanceof Error ? error.message : error });
   }
 });
 

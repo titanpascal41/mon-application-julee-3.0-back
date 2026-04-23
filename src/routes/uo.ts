@@ -44,7 +44,7 @@ router.post("/", async (req, res) => {
     const { code, nom, departement, chefUO, actif, societeId, projetSoumis } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le libellé du service est requis" });
+      return res.status(400).json({ error: "Le libellé du service est requis" });
     }
 
     const uo = await prisma.uniteOrganisationnelle.create({
@@ -80,7 +80,7 @@ router.put("/:id", async (req, res) => {
     const { code, nom, departement, chefUO, actif, societeId, projetSoumis } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le libellé du service est requis" });
+      return res.status(400).json({ error: "Le libellé du service est requis" });
     }
 
     const uo = await prisma.uniteOrganisationnelle.update({

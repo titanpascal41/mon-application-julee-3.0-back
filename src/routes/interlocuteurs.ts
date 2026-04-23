@@ -18,7 +18,7 @@ router.get("/", async (_req, res) => {
     return res.json(interlocuteurs);
   } catch (error) {
     console.error("Erreur SELECT interlocuteurs:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération des interlocuteurs", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
@@ -30,32 +30,31 @@ router.get("/:id", async (req, res) => {
       where: { id: parseInt(id) }
     });
     if (!interlocuteur) {
-      return res.status(404).json({ message: "Interlocuteur non trouvé" });
+      return res.status(404).json({ error: "Interlocuteur non trouvé" });
     }
     return res.json(interlocuteur);
   } catch (error) {
     console.error("Erreur SELECT interlocuteur:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération de l'interlocuteur", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
 // CREATE interlocuteur
 router.post("/", async (req, res) => {
   try {
-    const { nom, email, poste, telephone, actif, structureUO, uoId } = req.body;
+    const { nom, email, telephone, actif, structureUO, uoId } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le nom de l'interlocuteur est requis" });
+      return res.status(400).json({ error: "Le nom de l'interlocuteur est requis" });
     }
     if (!email || !email.trim()) {
-      return res.status(400).json({ message: "L'email de l'interlocuteur est requis" });
+      return res.status(400).json({ error: "L'email de l'interlocuteur est requis" });
     }
 
     const interlocuteur = await prisma.interlocuteur.create({
       data: {
         nom: nom.trim(),
         email: email.trim(),
-        poste: poste || null,
         telephone: telephone || null,
         actif: actif ?? true,
         structureUO: structureUO || null,
@@ -75,7 +74,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json(interlocuteur);
   } catch (error) {
     console.error("Erreur INSERT interlocuteur:", error);
-    return res.status(500).json({ message: "Erreur lors de la création de l'interlocuteur", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
@@ -83,13 +82,13 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom, email, poste, telephone, actif, structureUO, uoId } = req.body;
+    const { nom, email, telephone, actif, structureUO, uoId } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le nom de l'interlocuteur est requis" });
+      return res.status(400).json({ error: "Le nom de l'interlocuteur est requis" });
     }
     if (!email || !email.trim()) {
-      return res.status(400).json({ message: "L'email de l'interlocuteur est requis" });
+      return res.status(400).json({ error: "L'email de l'interlocuteur est requis" });
     }
 
     const interlocuteur = await prisma.interlocuteur.update({
@@ -97,7 +96,6 @@ router.put("/:id", async (req, res) => {
       data: {
         nom: nom.trim(),
         email: email.trim(),
-        poste: poste || null,
         telephone: telephone || null,
         actif: actif ?? true,
         structureUO: structureUO || null,
@@ -116,7 +114,7 @@ router.put("/:id", async (req, res) => {
     return res.json(interlocuteur);
   } catch (error) {
     console.error("Erreur UPDATE interlocuteur:", error);
-    return res.status(500).json({ message: "Erreur lors de la mise à jour de l'interlocuteur", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
@@ -139,7 +137,7 @@ router.patch("/:id/activation", async (req, res) => {
     return res.json(interlocuteur);
   } catch (error) {
     console.error("Erreur activation interlocuteur:", error);
-    return res.status(500).json({ message: "Erreur serveur", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
@@ -159,7 +157,7 @@ router.delete("/:id", async (req, res) => {
     return res.json({ message: "Interlocuteur supprimé" });
   } catch (error) {
     console.error("Erreur DELETE interlocuteur:", error);
-    return res.status(500).json({ message: "Erreur lors de la suppression de l'interlocuteur", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur serveur" });
   }
 });
 

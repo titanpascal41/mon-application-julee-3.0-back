@@ -12,7 +12,7 @@ router.get("/", async (_req, res) => {
     return res.json(ressources);
   } catch (error) {
     console.error("Erreur SELECT ressources:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération des ressources", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération des ressources", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -23,11 +23,11 @@ router.get("/:id", async (req, res) => {
     const ressource = await prisma.ressource.findUnique({
       where: { id: parseInt(id) }
     });
-    if (!ressource) return res.status(404).json({ message: "Ressource non trouvée" });
+    if (!ressource) return res.status(404).json({ error: "Ressource non trouvée" });
     return res.json(ressource);
   } catch (error) {
     console.error("Erreur SELECT ressource:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -37,7 +37,7 @@ router.post("/", async (req, res) => {
     const { nom, type, disponibiliteHJ, tauxJournalier } = req.body;
 
     if (!nom || !type || disponibiliteHJ === undefined || tauxJournalier === undefined) {
-      return res.status(400).json({ message: "Les champs nom, type, disponibiliteHJ et tauxJournalier sont requis" });
+      return res.status(400).json({ error: "Les champs nom, type, disponibiliteHJ et tauxJournalier sont requis" });
     }
 
     const ressource = await prisma.ressource.create({
@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json(ressource);
   } catch (error) {
     console.error("Erreur INSERT ressource:", error);
-    return res.status(500).json({ message: "Erreur lors de la création", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la création", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -74,7 +74,7 @@ router.put("/:id", async (req, res) => {
     return res.json(ressource);
   } catch (error) {
     console.error("Erreur UPDATE ressource:", error);
-    return res.status(500).json({ message: "Erreur lors de la mise à jour", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la mise à jour", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -88,7 +88,7 @@ router.delete("/:id", async (req, res) => {
     return res.json({ message: "Ressource supprimée" });
   } catch (error) {
     console.error("Erreur DELETE ressource:", error);
-    return res.status(500).json({ message: "Erreur lors de la suppression", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la suppression", error: error instanceof Error ? error.message : error });
   }
 });
 

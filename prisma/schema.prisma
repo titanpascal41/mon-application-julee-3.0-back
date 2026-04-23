@@ -185,6 +185,11 @@ model Demande {
   isDraft                      Boolean  @default(false)
   draftStep                    Int?
   draftStepLabel               String?
+
+  // Archivage
+  archived                     Boolean  @default(false)
+  archivedAt                   DateTime?
+  archivedBy                   Int?
   
   // Jointures
   societeId                    Int?

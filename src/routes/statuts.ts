@@ -18,7 +18,7 @@ router.get("/", async (_req, res) => {
     return res.json(statuts);
   } catch (error) {
     console.error("Erreur SELECT statuts:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération des statuts", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération des statuts", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -27,7 +27,7 @@ router.put("/reorder", async (req, res) => {
   try {
     const { orderedIds } = req.body; // [id1, id2, id3, ...]
     if (!Array.isArray(orderedIds)) {
-      return res.status(400).json({ message: "orderedIds doit être un tableau" });
+      return res.status(400).json({ error: "orderedIds doit être un tableau" });
     }
     await Promise.all(
       orderedIds.map((id: number, index: number) =>
@@ -37,7 +37,7 @@ router.put("/reorder", async (req, res) => {
     return res.json({ message: "Ordre mis à jour" });
   } catch (error) {
     console.error("Erreur reorder statuts:", error);
-    return res.status(500).json({ message: "Erreur lors du réordonnancement", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors du réordonnancement", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -49,12 +49,12 @@ router.get("/:id", async (req, res) => {
       where: { id: parseInt(id) }
     });
     if (!statut) {
-      return res.status(404).json({ message: "Statut non trouvé" });
+      return res.status(404).json({ error: "Statut non trouvé" });
     }
     return res.json(statut);
   } catch (error) {
     console.error("Erreur SELECT statut:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération du statut", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -64,7 +64,7 @@ router.post("/", async (req, res) => {
     const { nom, description, actif } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le nom du statut est requis" });
+      return res.status(400).json({ error: "Le nom du statut est requis" });
     }
 
     const statut = await prisma.statut.create({
@@ -86,7 +86,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json(statut);
   } catch (error) {
     console.error("Erreur INSERT statut:", error);
-    return res.status(500).json({ message: "Erreur lors de la création du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la création du statut", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -97,7 +97,7 @@ router.put("/:id", async (req, res) => {
     const { nom, description, actif } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le nom du statut est requis" });
+      return res.status(400).json({ error: "Le nom du statut est requis" });
     }
 
     const statut = await prisma.statut.update({
@@ -120,7 +120,7 @@ router.put("/:id", async (req, res) => {
     return res.json(statut);
   } catch (error) {
     console.error("Erreur UPDATE statut:", error);
-    return res.status(500).json({ message: "Erreur lors de la mise à jour du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la mise à jour du statut", error: error instanceof Error ? error.message : error });
   }
 });
 
@@ -140,7 +140,7 @@ router.delete("/:id", async (req, res) => {
     return res.json({ message: "Statut supprimé" });
   } catch (error) {
     console.error("Erreur DELETE statut:", error);
-    return res.status(500).json({ message: "Erreur lors de la suppression du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la suppression du statut", error: error instanceof Error ? error.message : error });
   }
 });
 

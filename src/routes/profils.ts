@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
     const { nom, code } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le nom du profil est requis" });
+      return res.status(400).json({ error: "Le nom du profil est requis" });
     }
 
     const profil = await prisma.profil.create({
@@ -77,7 +77,7 @@ router.put("/:id", async (req, res) => {
     const { nom, code } = req.body;
 
     if (!nom || !nom.trim()) {
-      return res.status(400).json({ message: "Le nom du profil est requis" });
+      return res.status(400).json({ error: "Le nom du profil est requis" });
     }
 
     const profil = await prisma.profil.update({
@@ -138,6 +138,13 @@ router.delete("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const profil = await prisma.profil.findUnique({ where: { id } });
+    if (!profil) return res.status(404).json({ error: "Profil non trouvé" });
+
+    const usersCount = await prisma.user.count({ where: { profilId: id } });
+    if (usersCount > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${usersCount} utilisateur(s) utilisent ce profil` });
+    }
+
     await prisma.profil.delete({ where: { id } });
     await logAudit({
       action: "SUPPRESSION",

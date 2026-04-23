@@ -1,6 +1,6 @@
 import { prisma } from "../db";
 
-type Action = "CREATION" | "MODIFICATION" | "SUPPRESSION" | "DESACTIVATION" | "REACTIVATION";
+type Action = "CREATION" | "MODIFICATION" | "SUPPRESSION" | "DESACTIVATION" | "REACTIVATION" | "CLOTURE";
 
 export async function logAudit(params: {
   action: Action;

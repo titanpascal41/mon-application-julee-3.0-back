@@ -10,27 +10,20 @@ router.get("/", async (req, res) => {
     const utilisateurId = req.query.utilisateurId
       ? parseInt(req.query.utilisateurId as string)
       : null;
+    const vueArchives = req.query.archives === "true";
 
     // Si utilisateurId est spécifié, vérifier si c'est un admin
-    let whereClause = {};
-    
+    let whereClause: any = { archived: vueArchives };
+
     if (utilisateurId) {
-      // Vérifier si l'utilisateur est admin (profilId: 1)
       const utilisateur = await prisma.user.findUnique({
         where: { id: utilisateurId },
         select: { profilId: true }
       });
-      
-      if (utilisateur && utilisateur.profilId === 1) {
-        // Admin : voir toutes les demandes
-        whereClause = {};
-      } else {
-        // Non-admin : voir seulement ses demandes
-        whereClause = { utilisateurId };
+
+      if (!utilisateur || utilisateur.profilId !== 1) {
+        whereClause.utilisateurId = utilisateurId;
       }
-    } else {
-      // Pas de filtre : retourner toutes les demandes
-      whereClause = {};
     }
 
     const demandes = await prisma.demande.findMany({
@@ -549,7 +542,7 @@ router.delete("/:id", async (req, res) => {
     });
 
     await logAudit({
-      action: "SUPPRESSION",
+      action: "CLOTURE",
       entite: "Demande",
       entiteId: demandeId,
       entiteNom: demande.nomProjet,
@@ -561,9 +554,14 @@ router.delete("/:id", async (req, res) => {
       utilisateurId: supprimePar,
     });
 
-    // Supprimer la demande
-    await prisma.demande.delete({
+    // Archiver la demande au lieu de la supprimer
+    await (prisma.demande as any).update({
       where: { id: demandeId },
+      data: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: supprimePar,
+      },
     });
 
     // Vérifier si le statut peut être supprimé (s'il n'est utilisé par aucune autre demande)

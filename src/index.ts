@@ -12,24 +12,23 @@ import demandesRoutes from "./routes/demandes";
 import uoRoutes from "./routes/uo";
 import permissionsRoutes from "./routes/permissions";
 import auditRoutes from "./routes/audit";
-// import recettesRoutes from "./routes/recettes";
-// import livraisonsRoutes from "./routes/livraisons";
-// import uatRoutes from "./routes/uat";
-// import roadmapRoutes from "./routes/roadmap";
-// import cadreTemporelRoutes from "./routes/cadreTemporel";
-// import sprintsRoutes from "./routes/sprints";
-// import ressourcesRoutes from "./routes/ressources";
-// import delaisRoutes from "./routes/delais";
-// import coutsRoutes from "./routes/couts";
+import { requireAuth, requireAdmin } from "./middleware/auth";
 
 config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const ALLOWED_ORIGINS = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['http://localhost:3002', 'http://10.109.69.4:3002', 'http://10.10.179.32:3002'];
+
 app.use(cors({
-  // origin: ['http://localhost:3000', 'http://10.109.69.4:3002', 'http://localhost:3002', 'http://10.10.179.32:3000', 'http://10.10.179.32:3002'],
-  origin: true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman in dev)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -38,24 +37,18 @@ app.get("/", (_req, res) => {
   res.send("Serveur Node.js + TypeScript opérationnel !");
 });
 
-app.use("/profils", profilsRoutes);
-app.use("/societes", societesRoutes);
-app.use("/interlocuteurs", interlocuteursRoutes);
+// Route publique : login uniquement
 app.use("/users", usersRoutes);
-app.use("/statuts", statutsRoutes);
-app.use("/demandes", demandesRoutes);
-app.use("/uo", uoRoutes);
-app.use("/permissions", permissionsRoutes);
-app.use("/audit", auditRoutes);
-// app.use("/recettes", recettesRoutes);
-// app.use("/livraisons", livraisonsRoutes);
-// app.use("/uat", uatRoutes);
-// app.use("/roadmap", roadmapRoutes);
-// app.use("/cadre-temporel", cadreTemporelRoutes);
-// app.use("/sprints", sprintsRoutes);
-// app.use("/ressources", ressourcesRoutes);
-// app.use("/delais", delaisRoutes);
-// app.use("/couts", coutsRoutes);
+
+// Routes protégées : JWT requis
+app.use("/profils", requireAuth, profilsRoutes);
+app.use("/societes", requireAuth, societesRoutes);
+app.use("/interlocuteurs", requireAuth, interlocuteursRoutes);
+app.use("/statuts", requireAuth, statutsRoutes);
+app.use("/demandes", requireAuth, demandesRoutes);
+app.use("/uo", requireAuth, uoRoutes);
+app.use("/permissions", requireAuth, permissionsRoutes);
+app.use("/audit", requireAdmin, auditRoutes);
 
 // Fonction de démarrage du serveur avec création de l'admin
 async function createVueProfilsPermissions() {
@@ -110,7 +103,7 @@ async function startServer() {
       console.log(`[server]: Serveur démarré sur http://0.0.0.0:${PORT}`);
       console.log(`[server]: Accès local: http://localhost:${PORT}`);
       console.log(`[server]: Accès réseau: http://10.109.69.4:${PORT}`);
-      console.log(`[server]: Utilisateur admin: admin@julee.local / JuleeAdmin@2024!`);
+      console.log(`[server]: Compte admin: admin@julee.local`);
     });
   } catch (error) {
     console.error('❌ Erreur au démarrage du serveur:', error);
