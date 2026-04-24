@@ -14,8 +14,8 @@ model User {
   email       String  @unique
   motDePasse  String
   profilId    Int
+  avatar      String? @db.Text
   demandes    Demande[]
-  userPermissions UserPermission[]
   profil      Profil  @relation(fields: [profilId], references: [id])
 
   @@map("users")
@@ -35,23 +35,6 @@ model Profil {
   @@map("profils")
 }
 
-model UserPermission {
-  id               Int      @id @default(autoincrement())
-  userId           Int
-  module           String                // administration, parametrage, demandes, etc.
-  submodule        String?               // profils, utilisateurs, societes, etc.
-  access           Boolean  @default(false)
-  create           Boolean  @default(false)
-  read             Boolean  @default(true)
-  update           Boolean  @default(false)
-  delete           Boolean  @default(false)
-  dateCreation     DateTime @default(now())
-  dateModification DateTime @updatedAt
-
-  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_permissions")
-}
 
 model Societe {
   id               Int      @id @default(autoincrement())
@@ -90,7 +73,6 @@ model Interlocuteur {
   uoId             Int?
   dateCreation     DateTime @default(now())
   dateModification DateTime @updatedAt
-  demandes         Demande[]
   @@map("interlocuteurs")
 }
 
@@ -204,7 +186,6 @@ model Demande {
   uniteOrganisationnelle       UniteOrganisationnelle? @relation(fields: [uniteOrganisationnelleId], references: [id])
   statut                       Statut? @relation(fields: [statutId], references: [id])
   utilisateur                 User? @relation(fields: [utilisateurId], references: [id])
-  interlocuteurs              Interlocuteur[]
   
   // Timestamps
   dateCreation                 DateTime @default(now())

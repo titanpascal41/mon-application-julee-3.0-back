@@ -35,6 +35,11 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
+    // Vérifier que le profil est actif
+    if (utilisateur.profil && utilisateur.profil.actif === false) {
+      return res.status(403).json({ error: "Votre profil est désactivé. Contactez l'administrateur." });
+    }
+
     const { motDePasse: _, ...utilisateurSansPassword } = utilisateur;
 
     const token = jwt.sign(
@@ -58,6 +63,9 @@ router.get("/:id/profile", requireAuth, async (req, res) => {
       include: { profil: true },
     });
     if (!utilisateur) return res.status(404).json({ error: "Utilisateur non trouvé" });
+    if (utilisateur.profil && utilisateur.profil.actif === false) {
+      return res.status(403).json({ error: "Votre profil est désactivé. Contactez l'administrateur." });
+    }
     const { motDePasse: _, ...utilisateurSansPassword } = utilisateur;
     res.status(200).json(utilisateurSansPassword);
   } catch (error) {
@@ -161,12 +169,15 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
 
     // Mettre à jour l'utilisateur
+    const { avatar } = req.body;
     const updateData: any = {
       nom: nom?.trim() || existingUser.nom,
       prenom: prenom?.trim() || existingUser.prenom,
       email: email?.toLowerCase().trim() || existingUser.email,
       profilId: profilId ? parseInt(profilId) : existingUser.profilId,
     };
+
+    if (avatar !== undefined) updateData.avatar = avatar;
 
     // Hasher le mot de passe seulement s'il est fourni
     if (motDePasse) {

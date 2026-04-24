@@ -10,10 +10,8 @@ router.get("/", async (req, res) => {
     const utilisateurId = req.query.utilisateurId
       ? parseInt(req.query.utilisateurId as string)
       : null;
-    const vueArchives = req.query.archives === "true";
 
-    // Si utilisateurId est spécifié, vérifier si c'est un admin
-    let whereClause: any = { archived: vueArchives };
+    let whereClause: any = {};
 
     if (utilisateurId) {
       const utilisateur = await prisma.user.findUnique({
@@ -181,32 +179,11 @@ router.post("/", async (req, res) => {
     // Si pas d'utilisateurID, utiliser l'admin (ID 1) par défaut
     const finalUtilisateurId = utilisateurId || 1;
 
-    // Créer automatiquement le statut s'il est fourni et s'il n'existe pas
+    // Associer le statut s'il existe
     let statutDemandeId = null;
     if (statutDemande) {
-      console.log("🔍 Vérification/Création du statut:", statutDemande);
-      
-      // Vérifier si le statut existe déjà
-      let statut = await prisma.statut.findFirst({
-        where: { nom: statutDemande }
-      });
-
-      // Si le statut n'existe pas, le créer
-      if (!statut) {
-        console.log("✅ Création automatique du statut:", statutDemande);
-        statut = await prisma.statut.create({
-          data: {
-            nom: statutDemande,
-            description: `Statut créé automatiquement lors de la création de la demande: ${finalNomProjet}`,
-            actif: true,
-            estAutomatique: true
-          }
-        });
-      } else {
-        console.log("📋 Statut existant trouvé:", statutDemande);
-      }
-      
-      statutDemandeId = statut.id;
+      const statut = await prisma.statut.findFirst({ where: { nom: statutDemande } });
+      if (statut) statutDemandeId = statut.id;
     }
 
     const demande = await prisma.demande.create({
@@ -374,32 +351,11 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Demande non trouvée" });
     }
 
-    // Créer automatiquement le statut s'il est fourni et s'il n'existe pas
+    // Associer le statut s'il existe
     let statutDemandeId = statutId;
     if (statutDemande && !statutId) {
-      console.log("🔍 Vérification/Création du statut lors de la mise à jour:", statutDemande);
-      
-      // Vérifier si le statut existe déjà
-      let statut = await prisma.statut.findFirst({
-        where: { nom: statutDemande }
-      });
-
-      // Si le statut n'existe pas, le créer
-      if (!statut) {
-        console.log("✅ Création automatique du statut lors de la mise à jour:", statutDemande);
-        statut = await prisma.statut.create({
-          data: {
-            nom: statutDemande,
-            description: `Statut créé automatiquement lors de la mise à jour de la demande: ${nomProjet || 'Demande #' + req.params.id}`,
-            actif: true,
-            estAutomatique: true
-          }
-        });
-      } else {
-        console.log("📋 Statut existant trouvé lors de la mise à jour:", statutDemande);
-      }
-      
-      statutDemandeId = statut.id;
+      const statut = await prisma.statut.findFirst({ where: { nom: statutDemande } });
+      if (statut) statutDemandeId = statut.id;
     }
 
     const demande = await prisma.demande.update({
@@ -499,9 +455,7 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const demandeId = parseInt(req.params.id);
-    const supprimePar = req.query.utilisateurId ? parseInt(req.query.utilisateurId as string) : null;
 
-    // Récupérer la demande avant de la supprimer pour piste d'audit
     const demande = await prisma.demande.findUnique({
       where: { id: demandeId },
     });
@@ -510,87 +464,12 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Demande non trouvée" });
     }
 
-    // Sauvegarder la piste d'audit AVANT suppression
-    await prisma.auditSuppression.upsert({
-      where: { demandeId },
-      update: {
-        nomProjet: demande.nomProjet,
-        typeProjet: demande.typeProjet,
-        societesDemandeurs: demande.societesDemandeurs,
-        interlocuteurClient: demande.interlocuteurClient,
-        dateEnregistrement: demande.dateEnregistrement,
-        statutDemande: demande.statutDemande,
-        draftStep: demande.draftStep,
-        draftStepLabel: demande.draftStepLabel,
-        donneesCompletes: demande as any,
-        supprimePar,
-        suppressionDate: new Date(),
-      },
-      create: {
-        demandeId,
-        nomProjet: demande.nomProjet,
-        typeProjet: demande.typeProjet,
-        societesDemandeurs: demande.societesDemandeurs,
-        interlocuteurClient: demande.interlocuteurClient,
-        dateEnregistrement: demande.dateEnregistrement,
-        statutDemande: demande.statutDemande,
-        draftStep: demande.draftStep,
-        draftStepLabel: demande.draftStepLabel,
-        donneesCompletes: demande as any,
-        supprimePar,
-      },
-    });
+    // Supprimer les audits liés avant (contrainte FK)
+    await (prisma.auditSuppression as any).deleteMany({ where: { demandeId } });
 
-    await logAudit({
-      action: "CLOTURE",
-      entite: "Demande",
-      entiteId: demandeId,
-      entiteNom: demande.nomProjet,
-      details: {
-        typeProjet: demande.typeProjet,
-        societes: demande.societesDemandeurs || null,
-        statut: demande.statutDemande || null,
-      },
-      utilisateurId: supprimePar,
-    });
+    await (prisma.demande as any).delete({ where: { id: demandeId } });
 
-    // Archiver la demande au lieu de la supprimer
-    await (prisma.demande as any).update({
-      where: { id: demandeId },
-      data: {
-        archived: true,
-        archivedAt: new Date(),
-        archivedBy: supprimePar,
-      },
-    });
-
-    // Vérifier si le statut peut être supprimé (s'il n'est utilisé par aucune autre demande)
-    if (demande.statutId) {
-      const autresDemandesAvecStatut = await prisma.demande.count({
-        where: { statutId: demande.statutId }
-      });
-
-      if (autresDemandesAvecStatut === 0) {
-        // Le statut n'est utilisé par aucune autre demande, on peut le supprimer
-        try {
-          await prisma.statut.delete({
-            where: { id: demande.statutId }
-          });
-          console.log(`✅ Statut ${demande.statutId} supprimé automatiquement (plus utilisé)`);
-        } catch (statutError) {
-          console.warn(`⚠️ Impossible de supprimer le statut ${demande.statutId}:`, statutError);
-          // Ne pas échouer la suppression de la demande si le statut ne peut pas être supprimé
-        }
-      } else {
-        console.log(`📋 Statut ${demande.statutId} conservé (utilisé par ${autresDemandesAvecStatut} autre(s) demande(s))`);
-      }
-    }
-
-    res.json({
-      message: "Demande supprimée avec succès",
-      auditEnregistre: true,
-      statutNettoyage: demande.statutId ? "Vérification du statut effectuée" : null
-    });
+    res.json({ message: "Demande supprimée avec succès" });
   } catch (error) {
     console.error("Erreur lors de la suppression de la demande:", error);
     res.status(500).json({ error: "Erreur serveur" });
