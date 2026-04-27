@@ -18,7 +18,7 @@ router.get("/", async (_req, res) => {
     return res.json(statuts);
   } catch (error) {
     console.error("Erreur SELECT statuts:", error);
-    return res.status(500).json({ error: "Erreur lors de la récupération des statuts", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération des statuts", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -37,7 +37,7 @@ router.put("/reorder", async (req, res) => {
     return res.json({ message: "Ordre mis à jour" });
   } catch (error) {
     console.error("Erreur reorder statuts:", error);
-    return res.status(500).json({ error: "Erreur lors du réordonnancement", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors du réordonnancement", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
     return res.json(statut);
   } catch (error) {
     console.error("Erreur SELECT statut:", error);
-    return res.status(500).json({ error: "Erreur lors de la récupération du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération du statut", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -86,7 +86,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json(statut);
   } catch (error) {
     console.error("Erreur INSERT statut:", error);
-    return res.status(500).json({ error: "Erreur lors de la création du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la création du statut", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -120,7 +120,7 @@ router.put("/:id", async (req, res) => {
     return res.json(statut);
   } catch (error) {
     console.error("Erreur UPDATE statut:", error);
-    return res.status(500).json({ error: "Erreur lors de la mise à jour du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la mise à jour du statut", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -140,7 +140,7 @@ router.delete("/:id", async (req, res) => {
     return res.json({ message: "Statut supprimé" });
   } catch (error) {
     console.error("Erreur DELETE statut:", error);
-    return res.status(500).json({ error: "Erreur lors de la suppression du statut", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la suppression du statut", details: error instanceof Error ? error.message : String(error) });
   }
 });
 

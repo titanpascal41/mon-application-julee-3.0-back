@@ -46,54 +46,6 @@ export async function seedAdminUser() {
     });
 
     console.log('✅ Utilisateur admin créé avec ID:', adminUser.id);
-
-    // Donner toutes les permissions à l'utilisateur admin
-    console.log('🔐 Attribution des permissions admin...');
-    
-    const modules = ['administration', 'parametrage', 'demandes', 'dashboard'];
-    const submodules = {
-      administration: ['profils', 'utilisateurs'],
-      parametrage: ['societes', 'uo', 'statuts', 'interlocuteurs'],
-      demandes: ['nouvelle', 'evolution', 'prospecte'],
-      dashboard: []
-    };
-
-    for (const module of modules) {
-      // Permission module
-      await prisma.userPermission.create({
-        data: {
-          userId: adminUser.id,
-          module: module,
-          submodule: null,
-          access: true,
-          create: true,
-          read: true,
-          update: true,
-          delete: true
-        }
-      });
-
-      // Permissions sous-modules
-      const moduleSubmodules = submodules[module as keyof typeof submodules];
-      if (moduleSubmodules) {
-        for (const submodule of moduleSubmodules) {
-          await prisma.userPermission.create({
-            data: {
-              userId: adminUser.id,
-              module: module,
-              submodule: submodule,
-              access: true,
-              create: true,
-              read: true,
-              update: true,
-              delete: true
-            }
-          });
-        }
-      }
-    }
-
-    console.log('✅ Permissions admin attribuées avec succès !');
     console.log('✅ Utilisateur admin prêt à l\'emploi !');
 
   } catch (error) {

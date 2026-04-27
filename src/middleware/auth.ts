@@ -29,7 +29,8 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 
 export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   requireAuth(req, res, () => {
-    if (req.userProfilNom !== "admin") {
+    const nom = (req.userProfilNom || "").toLowerCase();
+    if (nom !== "admin" && nom !== "administrateur") {
       return res.status(403).json({ error: "Accès réservé aux administrateurs" });
     }
     next();

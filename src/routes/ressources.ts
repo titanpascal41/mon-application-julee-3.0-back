@@ -12,7 +12,7 @@ router.get("/", async (_req, res) => {
     return res.json(ressources);
   } catch (error) {
     console.error("Erreur SELECT ressources:", error);
-    return res.status(500).json({ error: "Erreur lors de la récupération des ressources", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération des ressources", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -27,7 +27,7 @@ router.get("/:id", async (req, res) => {
     return res.json(ressource);
   } catch (error) {
     console.error("Erreur SELECT ressource:", error);
-    return res.status(500).json({ error: "Erreur lors de la récupération", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la récupération", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
     return res.status(201).json(ressource);
   } catch (error) {
     console.error("Erreur INSERT ressource:", error);
-    return res.status(500).json({ error: "Erreur lors de la création", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la création", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -74,7 +74,7 @@ router.put("/:id", async (req, res) => {
     return res.json(ressource);
   } catch (error) {
     console.error("Erreur UPDATE ressource:", error);
-    return res.status(500).json({ error: "Erreur lors de la mise à jour", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la mise à jour", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -88,7 +88,7 @@ router.delete("/:id", async (req, res) => {
     return res.json({ message: "Ressource supprimée" });
   } catch (error) {
     console.error("Erreur DELETE ressource:", error);
-    return res.status(500).json({ error: "Erreur lors de la suppression", error: error instanceof Error ? error.message : error });
+    return res.status(500).json({ error: "Erreur lors de la suppression", details: error instanceof Error ? error.message : String(error) });
   }
 });
 

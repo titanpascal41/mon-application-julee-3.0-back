@@ -9,7 +9,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && npm run db:seed",
     "postmigrate": "npm run db:seed",
-    "prestart": "npm run db:seed"
+    "prestart": ""
   },
   "keywords": [],
   "author": "",
