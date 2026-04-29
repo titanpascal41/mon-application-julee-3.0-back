@@ -12,7 +12,7 @@ import demandesRoutes from "./routes/demandes";
 import uoRoutes from "./routes/uo";
 import permissionsRoutes from "./routes/permissions";
 import auditRoutes from "./routes/audit";
-import { requireAuth, requireAdmin } from "./middleware/auth";
+import { requireAuth } from "./middleware/auth";
 
 config();
 
@@ -48,7 +48,7 @@ app.use("/statuts", requireAuth, statutsRoutes);
 app.use("/demandes", requireAuth, demandesRoutes);
 app.use("/uo", requireAuth, uoRoutes);
 app.use("/permissions", requireAuth, permissionsRoutes);
-app.use("/audit", requireAdmin, auditRoutes);
+app.use("/audit", requireAuth, auditRoutes);
 
 // Fonction de démarrage du serveur avec création de l'admin
 async function createVueProfilsPermissions() {
