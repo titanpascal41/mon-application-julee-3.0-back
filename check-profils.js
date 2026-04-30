@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function checkProfils() {
   try {
-    console.log("📋 Vérification des profils et utilisateurs...");
+    console.log(" Vérification des profils et utilisateurs...");
 
     // Voir tous les profils
     const profils = await prisma.profil.findMany({
@@ -21,7 +21,7 @@ async function checkProfils() {
       },
     });
 
-    console.log("\n🏷️  Profils disponibles:");
+    console.log("  Profils disponibles:");
     profils.forEach((profil) => {
       console.log(
         `   ID: ${profil.id} - Nom: "${profil.nom}" (${profil.users.length} utilisateurs)`,

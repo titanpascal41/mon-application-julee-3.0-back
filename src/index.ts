@@ -81,9 +81,9 @@ async function createVueProfilsPermissions() {
       ) perm ON TRUE
       WHERE p.permissions IS NOT NULL
     `);
-    console.log("✅ Vue vue_profils_permissions créée/mise à jour");
+    console.log(" Vue vue_profils_permissions créée/mise à jour");
   } catch (e) {
-    console.error("❌ Erreur création vue permissions:", e);
+    console.error("Erreur création vue permissions:", e);
   }
 }
 
@@ -106,7 +106,7 @@ async function startServer() {
       console.log(`[server]: Compte admin: admin@julee.local`);
     });
   } catch (error) {
-    console.error('❌ Erreur au démarrage du serveur:', error);
+    console.error(' Erreur au démarrage du serveur:', error);
     process.exit(1);
   }
 }

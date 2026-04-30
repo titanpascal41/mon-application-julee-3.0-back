@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function giveAllPermissions() {
   try {
     console.log(
-      "🔐 Attribution de toutes les permissions au profil kouakou (ID: 1)...",
+      " Attribution de toutes les permissions au profil kouakou (ID: 1)...",
     );
 
     const modules = [
@@ -38,7 +38,7 @@ async function giveAllPermissions() {
             delete: true,
           },
         });
-        console.log(`✅ Permission mise à jour pour ${module}`);
+        console.log(`Permission mise à jour pour ${module}`);
       } else {
         // Créer la permission avec tous les droits
         await prisma.permission.create({
@@ -52,18 +52,18 @@ async function giveAllPermissions() {
             delete: true,
           },
         });
-        console.log(`✅ Permission créée pour ${module}`);
+        console.log(` Permission créée pour ${module}`);
       }
     }
 
     console.log(
-      "\n🎉 Le profil 'kouakou' (ID: 1) a maintenant toutes les permissions !",
+      " Le profil 'kouakou' (ID: 1) a maintenant toutes les permissions !",
     );
     console.log(
-      "📝 Les utilisateurs créés avec profilId: 1 auront tous les accès.",
+      " Les utilisateurs créés avec profilId: 1 auront tous les accès.",
     );
   } catch (error) {
-    console.error("❌ Erreur:", error);
+    console.error(" Erreur:", error);
   } finally {
     await prisma.$disconnect();
   }
