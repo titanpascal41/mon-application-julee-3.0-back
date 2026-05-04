@@ -109,7 +109,7 @@ router.post("/", async (req, res) => {
         nom: nom.trim(),
         departement: dept,
         source: source === "ajoutee" ? "ajoutee" : "creee",
-        actif: false
+        actif: true
       }
     });
 

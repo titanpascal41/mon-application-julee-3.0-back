@@ -87,6 +87,51 @@ async function createVueProfilsPermissions() {
   }
 }
 
+const UOS_GS2E_DEFAUT = [
+  "Service Intégration Fonctionnelle et QSE",
+  "Service Cohérence SAPHIR V3",
+  "Service Développement Support V3",
+  "Service Gestion Clientele CIE",
+  "Service Développement OPEN SOURCE",
+  "Service STAFF DDI",
+  "Service Développement SAPHIR V3",
+  "Service Interface",
+  "Service Cohérence Caisse Comptabilité",
+  "Service Développement et Support Technologies Microsoft",
+  "Service Développement Caisse/Comptabilité",
+  "Service Développement Editiques",
+  "SERVICE SUPPORT",
+  "Service Développement Processus Transverses",
+  "Service Testing Factory",
+  "Service Coherence Demande",
+  "Service TNR",
+  "Service Développement Demandes",
+  "Service PIC et Migration",
+  "Service Gestion De Projets",
+  "SERVICE DEVELOPPEMENT WEB MOBILE ET LOT",
+  "Service Développement Facturation et Recouvrement",
+  "Service De Gestion Clientele SODECI",
+  "Service Cohérence Facturation",
+];
+
+async function ensureDefaultUOs() {
+  try {
+    const gs2e = await (prisma as any).societe.findFirst({ where: { code: "GS2E", actif: true } });
+    if (!gs2e) return; // GS2E pas encore créée, on skip
+    for (const nom of UOS_GS2E_DEFAUT) {
+      const existing = await (prisma as any).uniteOrganisationnelle.findFirst({ where: { nom, societeId: gs2e.id } });
+      if (!existing) {
+        await (prisma as any).uniteOrganisationnelle.create({
+          data: { nom, chefUO: "-", societeId: gs2e.id, departement: gs2e.departement || null, actif: true }
+        });
+      }
+    }
+    console.log("✅ UOs GS2E par défaut vérifiées");
+  } catch (e) {
+    console.error("❌ Erreur UOs par défaut:", e);
+  }
+}
+
 async function startServer() {
   try {
     // Attendre un peu pour que la connexion à la base de données s'établisse
@@ -97,6 +142,9 @@ async function startServer() {
 
     // Créer l'utilisateur admin s'il n'existe pas
     await ensureAdminExists();
+
+    // Créer les UOs GS2E par défaut si elles n'existent pas
+    await ensureDefaultUOs();
     
     // Démarrer le serveur
     app.listen(Number(PORT), '0.0.0.0', () => {
