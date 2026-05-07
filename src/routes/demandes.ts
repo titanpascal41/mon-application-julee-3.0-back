@@ -459,6 +459,7 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const demandeId = parseInt(req.params.id);
+    const utilisateurId = req.body?.utilisateurId ?? (req as any).user?.id ?? null;
 
     const demande = await prisma.demande.findUnique({
       where: { id: demandeId },
@@ -472,6 +473,15 @@ router.delete("/:id", async (req, res) => {
     await (prisma.auditSuppression as any).deleteMany({ where: { demandeId } });
 
     await (prisma.demande as any).delete({ where: { id: demandeId } });
+
+    await logAudit({
+      action: "SUPPRESSION",
+      entite: "Demande",
+      entiteId: demandeId,
+      entiteNom: (demande as any).nomProjet || `Demande #${demandeId}`,
+      details: { typeProjet: (demande as any).typeProjet, statut: (demande as any).statutLivraison },
+      utilisateurId: utilisateurId ? parseInt(utilisateurId) : null,
+    });
 
     res.json({ message: "Demande supprimée avec succès" });
   } catch (error) {

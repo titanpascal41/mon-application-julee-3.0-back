@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { requireAuth, JWT_SECRET } from "../middleware/auth";
+import { logAudit } from "../utils/auditHelper";
 
 const SALT_ROUNDS = 10;
 
@@ -134,6 +135,15 @@ router.post("/", requireAuth, async (req, res) => {
     // Retourner l'utilisateur créé sans le mot de passe
     const { motDePasse: _, ...utilisateurSansPassword } = utilisateur;
 
+    await logAudit({
+      action: "CREATION",
+      entite: "Utilisateur",
+      entiteId: utilisateur.id,
+      entiteNom: `${prenom} ${nom}`,
+      details: { email: utilisateur.email, profilId: utilisateur.profilId },
+      utilisateurId: (req as any).user?.id ?? null,
+    });
+
     res.status(201).json(utilisateurSansPassword);
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur:", error);
@@ -192,6 +202,15 @@ router.put("/:id", requireAuth, async (req, res) => {
     // Retourner l'utilisateur mis à jour sans le mot de passe
     const { motDePasse: _, ...utilisateurSansPassword } = utilisateur;
 
+    await logAudit({
+      action: "MODIFICATION",
+      entite: "Utilisateur",
+      entiteId: utilisateur.id,
+      entiteNom: `${utilisateur.prenom} ${utilisateur.nom}`,
+      details: { email: utilisateur.email, profilId: utilisateur.profilId, motDePasseModifie: !!motDePasse },
+      utilisateurId: (req as any).user?.id ?? null,
+    });
+
     res.status(200).json(utilisateurSansPassword);
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
@@ -216,6 +235,15 @@ router.delete("/:id", requireAuth, async (req, res) => {
     // Supprimer l'utilisateur
     await prisma.user.delete({
       where: { id: parseInt(id) },
+    });
+
+    await logAudit({
+      action: "SUPPRESSION",
+      entite: "Utilisateur",
+      entiteId: parseInt(id),
+      entiteNom: `${utilisateur.prenom} ${utilisateur.nom}`,
+      details: { email: utilisateur.email, profilId: utilisateur.profilId },
+      utilisateurId: (req as any).user?.id ?? null,
     });
 
     res.status(204).send(); // No Content

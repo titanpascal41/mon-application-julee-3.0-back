@@ -34,6 +34,13 @@ router.put("/reorder", async (req, res) => {
         prisma.statut.update({ where: { id }, data: { ordre: index } })
       )
     );
+    await logAudit({
+      action: "MODIFICATION",
+      entite: "Statut",
+      entiteNom: "Réordonnancement",
+      details: { orderedIds },
+      utilisateurId: getUid(req),
+    });
     return res.json({ message: "Ordre mis à jour" });
   } catch (error) {
     console.error("Erreur reorder statuts:", error);
