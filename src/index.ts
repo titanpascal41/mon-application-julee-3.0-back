@@ -116,8 +116,17 @@ const UOS_GS2E_DEFAUT = [
 
 async function ensureDefaultUOs() {
   try {
-    const gs2e = await (prisma as any).societe.findFirst({ where: { code: "GS2E", actif: true } });
-    if (!gs2e) return; // GS2E pas encore créée, on skip
+    // Créer GS2E si elle n'existe pas
+    let gs2e = await (prisma as any).societe.findFirst({ where: { code: "GS2E" } });
+    if (!gs2e) {
+      gs2e = await (prisma as any).societe.create({
+        data: { code: "GS2E", nom: "GS2E", actif: true }
+      });
+      console.log("✅ Société GS2E créée par défaut");
+    } else if (!gs2e.actif) {
+      await (prisma as any).societe.update({ where: { id: gs2e.id }, data: { actif: true } });
+      console.log("✅ Société GS2E réactivée");
+    }
     for (const nom of UOS_GS2E_DEFAUT) {
       const existing = await (prisma as any).uniteOrganisationnelle.findFirst({ where: { nom, societeId: gs2e.id } });
       if (!existing) {
@@ -132,6 +141,41 @@ async function ensureDefaultUOs() {
   }
 }
 
+const STATUTS_DEFAUT = [
+  { nom: "En attente",   description: "Demande en attente de traitement" },
+  { nom: "En cours",     description: "Demande en cours de traitement" },
+  { nom: "Suspendu",     description: "Demande temporairement suspendue" },
+  { nom: "Annulé",       description: "Demande annulée" },
+  { nom: "Terminé",      description: "Demande terminée avec succès" },
+];
+
+async function ensureDefaultStatuts() {
+  try {
+    const count = await (prisma as any).statut.count();
+    if (count > 0) return; // Statuts déjà présents
+    for (let i = 0; i < STATUTS_DEFAUT.length; i++) {
+      await (prisma as any).statut.create({
+        data: { ...STATUTS_DEFAUT[i], actif: true, ordre: i }
+      });
+    }
+    console.log("✅ Statuts par défaut créés");
+  } catch (e) {
+    console.error("❌ Erreur statuts par défaut:", e);
+  }
+}
+
+async function fixSocietesActif() {
+  try {
+    const result = await (prisma as any).societe.updateMany({
+      where: { actif: false, source: { not: "ajoutee" } },
+      data: { actif: true }
+    });
+    if (result.count > 0) console.log(`✅ ${result.count} société(s) réactivée(s) par défaut`);
+  } catch (e) {
+    console.error("❌ Erreur fix sociétés actif:", e);
+  }
+}
+
 async function startServer() {
   try {
     // Attendre un peu pour que la connexion à la base de données s'établisse
@@ -142,6 +186,12 @@ async function startServer() {
 
     // Créer l'utilisateur admin s'il n'existe pas
     await ensureAdminExists();
+
+    // Corriger les sociétés inactives par défaut
+    await fixSocietesActif();
+
+    // Créer les statuts par défaut s'il n'y en a aucun
+    await ensureDefaultStatuts();
 
     // Créer les UOs GS2E par défaut si elles n'existent pas
     await ensureDefaultUOs();
