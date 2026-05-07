@@ -124,8 +124,9 @@ model Demande {
   perimetre             String?
   statutDemande         String?
   dateReception         DateTime?
-  lienIngridCDC         String?  // Ajouté pour le lien Ingrid CDC
-  
+  lienIngridCDC         String?
+  observations          String?  @db.Text
+
   // Étape 2: Clarification de la demande
   dateTransmissionBacklog       DateTime?
   dateConfirmationValidation   DateTime?

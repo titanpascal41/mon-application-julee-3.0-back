@@ -119,6 +119,7 @@ router.post("/", async (req, res) => {
       dateTransmissionBacklog,
       dateConfirmationValidation,
       lienIngridCDC,
+      observations,
       statutDemandes, // Nouveau champ pour le statut de la demande
       // Étape 3: Planification
       dateDemandePlanificationDev,
@@ -204,6 +205,7 @@ router.post("/", async (req, res) => {
         interlocuteur: interlocuteur || null,
         // Étape 2: Clarification
         ...(lienIngridCDC !== undefined && lienIngridCDC !== null && { lienIngridCDC }),
+        ...(observations !== undefined && observations !== null && { observations }),
         ...(dateTransmissionBacklog !== undefined && dateTransmissionBacklog !== null && {
           dateTransmissionBacklog: new Date(dateTransmissionBacklog),
         }),
@@ -295,6 +297,7 @@ router.put("/:id", async (req, res) => {
       dateTransmissionBacklog,
       dateConfirmationValidation,
       lienIngridCDC,
+      observations,
       // Étape 3: Planification
       dateDemandePlanificationDev,
       dateDemandePlanificationTif,
@@ -388,6 +391,7 @@ router.put("/:id", async (req, res) => {
           dateConfirmationValidation: new Date(dateConfirmationValidation),
         }),
         ...(lienIngridCDC !== undefined && lienIngridCDC !== null && { lienIngridCDC }),
+        ...(observations !== undefined && observations !== null && { observations }),
         // Étape 3: Planification
         ...(dateDemandePlanificationDev !== undefined && dateDemandePlanificationDev !== null && {
           dateDemandePlanificationDev: new Date(dateDemandePlanificationDev),
