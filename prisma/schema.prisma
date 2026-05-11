@@ -160,6 +160,17 @@ model Demande {
   // Étape 7: Livraison
   statutLivraison              String   @default("en attente")
   
+  // Champs spécifiques Demande d'Évolution
+  dateDemandeMiseAJourDATFL    DateTime?
+  dateReponseMiseAJourDATFL    DateTime?
+  planningDateDebut            DateTime?
+  planningDateFin              DateTime?
+  dateDemandeDevolution        DateTime?
+  dateReponseDevolution        DateTime?
+  slt                          String?   @db.Text
+  aleasNormeParJour            String?
+  charge                       Float?
+
   // Suspension
   motifSuspension              String?
   dateSuspension               DateTime?

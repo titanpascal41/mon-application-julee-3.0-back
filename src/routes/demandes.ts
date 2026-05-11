@@ -120,7 +120,17 @@ router.post("/", async (req, res) => {
       dateConfirmationValidation,
       lienIngridCDC,
       observations,
-      statutDemandes, // Nouveau champ pour le statut de la demande
+      statutDemandes,
+      // Champs Evolution
+      dateDemandeMiseAJourDATFL,
+      dateReponseMiseAJourDATFL,
+      planningDateDebut,
+      planningDateFin,
+      dateDemandeDevolution,
+      dateReponseDevolution,
+      slt,
+      aleasNormeParJour,
+      charge,
       // Étape 3: Planification
       dateDemandePlanificationDev,
       dateDemandePlanificationTif,
@@ -212,6 +222,16 @@ router.post("/", async (req, res) => {
         ...(dateConfirmationValidation !== undefined && dateConfirmationValidation !== null && {
           dateConfirmationValidation: new Date(dateConfirmationValidation),
         }),
+        // Champs Évolution
+        ...(dateDemandeMiseAJourDATFL !== undefined && dateDemandeMiseAJourDATFL !== null && { dateDemandeMiseAJourDATFL: new Date(dateDemandeMiseAJourDATFL) }),
+        ...(dateReponseMiseAJourDATFL !== undefined && dateReponseMiseAJourDATFL !== null && { dateReponseMiseAJourDATFL: new Date(dateReponseMiseAJourDATFL) }),
+        ...(planningDateDebut !== undefined && planningDateDebut !== null && { planningDateDebut: new Date(planningDateDebut) }),
+        ...(planningDateFin !== undefined && planningDateFin !== null && { planningDateFin: new Date(planningDateFin) }),
+        ...(dateDemandeDevolution !== undefined && dateDemandeDevolution !== null && { dateDemandeDevolution: new Date(dateDemandeDevolution) }),
+        ...(dateReponseDevolution !== undefined && dateReponseDevolution !== null && { dateReponseDevolution: new Date(dateReponseDevolution) }),
+        ...(slt !== undefined && slt !== null && { slt }),
+        ...(aleasNormeParJour !== undefined && aleasNormeParJour !== null && { aleasNormeParJour }),
+        ...(charge !== undefined && charge !== null && { charge: parseFloat(charge) }),
         // Étape 3: Planification
         ...(dateDemandePlanificationDev !== undefined && dateDemandePlanificationDev !== null && {
           dateDemandePlanificationDev: new Date(dateDemandePlanificationDev),
@@ -298,6 +318,16 @@ router.put("/:id", async (req, res) => {
       dateConfirmationValidation,
       lienIngridCDC,
       observations,
+      // Champs Évolution
+      dateDemandeMiseAJourDATFL,
+      dateReponseMiseAJourDATFL,
+      planningDateDebut,
+      planningDateFin,
+      dateDemandeDevolution,
+      dateReponseDevolution,
+      slt,
+      aleasNormeParJour,
+      charge,
       // Étape 3: Planification
       dateDemandePlanificationDev,
       dateDemandePlanificationTif,
@@ -392,6 +422,16 @@ router.put("/:id", async (req, res) => {
         }),
         ...(lienIngridCDC !== undefined && lienIngridCDC !== null && { lienIngridCDC }),
         ...(observations !== undefined && observations !== null && { observations }),
+        // Champs Évolution
+        ...(dateDemandeMiseAJourDATFL !== undefined && dateDemandeMiseAJourDATFL !== null && { dateDemandeMiseAJourDATFL: new Date(dateDemandeMiseAJourDATFL) }),
+        ...(dateReponseMiseAJourDATFL !== undefined && dateReponseMiseAJourDATFL !== null && { dateReponseMiseAJourDATFL: new Date(dateReponseMiseAJourDATFL) }),
+        ...(planningDateDebut !== undefined && planningDateDebut !== null && { planningDateDebut: new Date(planningDateDebut) }),
+        ...(planningDateFin !== undefined && planningDateFin !== null && { planningDateFin: new Date(planningDateFin) }),
+        ...(dateDemandeDevolution !== undefined && dateDemandeDevolution !== null && { dateDemandeDevolution: new Date(dateDemandeDevolution) }),
+        ...(dateReponseDevolution !== undefined && dateReponseDevolution !== null && { dateReponseDevolution: new Date(dateReponseDevolution) }),
+        ...(slt !== undefined && slt !== null && { slt }),
+        ...(aleasNormeParJour !== undefined && aleasNormeParJour !== null && { aleasNormeParJour }),
+        ...(charge !== undefined && charge !== null && { charge: parseFloat(charge) }),
         // Étape 3: Planification
         ...(dateDemandePlanificationDev !== undefined && dateDemandePlanificationDev !== null && {
           dateDemandePlanificationDev: new Date(dateDemandePlanificationDev),
