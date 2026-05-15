@@ -154,6 +154,8 @@ router.post("/", async (req, res) => {
       lienIngridPointsControleTIF,
       lienIngridSignoff,
       statutTIF,
+      motifSuspension,
+      dateSuspension,
     } = req.body;
 
     console.log("🔍 Backend POST - Données reçues:", {
@@ -232,6 +234,8 @@ router.post("/", async (req, res) => {
         ...(slt !== undefined && slt !== null && { slt }),
         ...(aleasNormeParJour !== undefined && aleasNormeParJour !== null && { aleasNormeParJour }),
         ...(charge !== undefined && charge !== null && { charge: parseFloat(charge) }),
+        ...(motifSuspension !== undefined && motifSuspension !== null && { motifSuspension }),
+        ...(dateSuspension !== undefined && dateSuspension !== null && { dateSuspension: new Date(dateSuspension) }),
         // Étape 3: Planification
         ...(dateDemandePlanificationDev !== undefined && dateDemandePlanificationDev !== null && {
           dateDemandePlanificationDev: new Date(dateDemandePlanificationDev),
@@ -351,6 +355,8 @@ router.put("/:id", async (req, res) => {
       lienIngridPointsControleTIF,
       lienIngridSignoff,
       statutTIF,
+      motifSuspension,
+      dateSuspension,
     } = req.body;
 
     console.log("🔍 Backend PUT - Données reçues:", {
@@ -432,6 +438,8 @@ router.put("/:id", async (req, res) => {
         ...(slt !== undefined && slt !== null && { slt }),
         ...(aleasNormeParJour !== undefined && aleasNormeParJour !== null && { aleasNormeParJour }),
         ...(charge !== undefined && charge !== null && { charge: parseFloat(charge) }),
+        ...(motifSuspension !== undefined && motifSuspension !== null && { motifSuspension }),
+        ...(dateSuspension !== undefined && dateSuspension !== null && { dateSuspension: new Date(dateSuspension) }),
         // Étape 3: Planification
         ...(dateDemandePlanificationDev !== undefined && dateDemandePlanificationDev !== null && {
           dateDemandePlanificationDev: new Date(dateDemandePlanificationDev),
