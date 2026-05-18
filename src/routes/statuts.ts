@@ -74,12 +74,13 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Le nom du statut est requis" });
     }
 
+    const doublon = await prisma.statut.findFirst({ where: { nom: nom.trim() } });
+    if (doublon) {
+      return res.status(409).json({ error: `Un statut nommé "${nom.trim()}" existe déjà.` });
+    }
+
     const statut = await prisma.statut.create({
-      data: {
-        nom: nom.trim(),
-        description,
-        actif: actif ?? true
-      }
+      data: { nom: nom.trim(), description, actif: actif ?? true }
     });
 
     await logAudit({
@@ -107,13 +108,16 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: "Le nom du statut est requis" });
     }
 
+    const doublon = await prisma.statut.findFirst({
+      where: { nom: nom.trim(), NOT: { id: parseInt(id) } }
+    });
+    if (doublon) {
+      return res.status(409).json({ error: `Un statut nommé "${nom.trim()}" existe déjà.` });
+    }
+
     const statut = await prisma.statut.update({
       where: { id: parseInt(id) },
-      data: {
-        nom: nom.trim(),
-        description,
-        actif: actif ?? true
-      }
+      data: { nom: nom.trim(), description, actif: actif ?? true }
     });
 
     await logAudit({
@@ -136,6 +140,12 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const statut = await prisma.statut.findUnique({ where: { id: parseInt(id) } });
+
+    const demandesLiees = await prisma.demande.count({ where: { statutId: parseInt(id) } });
+    if (demandesLiees > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${demandesLiees} demande(s) utilisent ce statut.` });
+    }
+
     await prisma.statut.delete({ where: { id: parseInt(id) } });
     await logAudit({
       action: "SUPPRESSION",
