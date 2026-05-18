@@ -47,6 +47,16 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Le libellé du service est requis" });
     }
 
+    // Vérifier unicité code + societeId (si code fourni)
+    if (code && code.trim() && societeId) {
+      const doublon = await prisma.uniteOrganisationnelle.findFirst({
+        where: { code: code.trim().toUpperCase(), societeId: parseInt(societeId) }
+      });
+      if (doublon) {
+        return res.status(409).json({ error: `Une UO avec le code "${code.trim().toUpperCase()}" existe déjà pour cette société.` });
+      }
+    }
+
     const uo = await prisma.uniteOrganisationnelle.create({
       data: {
         code: code ? code.trim().toUpperCase() : null,
@@ -83,8 +93,20 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: "Le libellé du service est requis" });
     }
 
+    const currentId = parseInt(req.params.id);
+
+    // Vérifier unicité code + societeId (exclure l'UO elle-même)
+    if (code && code.trim() && societeId) {
+      const doublon = await prisma.uniteOrganisationnelle.findFirst({
+        where: { code: code.trim().toUpperCase(), societeId: parseInt(societeId), NOT: { id: currentId } }
+      });
+      if (doublon) {
+        return res.status(409).json({ error: `Une UO avec le code "${code.trim().toUpperCase()}" existe déjà pour cette société.` });
+      }
+    }
+
     const uo = await prisma.uniteOrganisationnelle.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id: currentId },
       data: {
         code: code ? code.trim().toUpperCase() : null,
         nom: nom.trim(),
@@ -139,6 +161,19 @@ router.delete("/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const uo = await prisma.uniteOrganisationnelle.findUnique({ where: { id } });
+
+    // Vérifier les demandes liées
+    const demandesLiees = await prisma.demande.count({ where: { uniteOrganisationnelleId: id } });
+    if (demandesLiees > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${demandesLiees} demande(s) sont liées à cette UO.` });
+    }
+
+    // Vérifier les interlocuteurs liés
+    const interlocuteursLies = await (prisma as any).interlocuteur.count({ where: { uoId: id } });
+    if (interlocuteursLies > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${interlocuteursLies} interlocuteur(s) sont liés à cette UO.` });
+    }
+
     await prisma.uniteOrganisationnelle.delete({ where: { id } });
     await logAudit({
       action: "SUPPRESSION",
