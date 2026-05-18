@@ -223,19 +223,18 @@ router.delete("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Vérifier si l'utilisateur existe
-    const utilisateur = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
-    });
+    const utilisateur = await prisma.user.findUnique({ where: { id: parseInt(id) } });
 
     if (!utilisateur) {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    // Supprimer l'utilisateur
-    await prisma.user.delete({
-      where: { id: parseInt(id) },
-    });
+    const demandesLiees = await prisma.demande.count({ where: { utilisateurId: parseInt(id) } });
+    if (demandesLiees > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${demandesLiees} demande(s) ont été créées par cet utilisateur.` });
+    }
+
+    await prisma.user.delete({ where: { id: parseInt(id) } });
 
     await logAudit({
       action: "SUPPRESSION",

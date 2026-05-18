@@ -22,6 +22,20 @@ router.get("/", async (_req, res) => {
   }
 });
 
+// GET vérifier si une UO est liée à des demandes
+router.get("/:id/demandes-count", async (req, res) => {
+  try {
+    const demandes = await prisma.demande.findMany({
+      where: { uniteOrganisationnelleId: parseInt(req.params.id) },
+      select: { nomProjet: true }
+    });
+    const noms = demandes.map((d: any) => d.nomProjet).filter(Boolean);
+    return res.json({ count: noms.length, noms });
+  } catch (error) {
+    return res.json({ count: 0, noms: [] });
+  }
+});
+
 // GET une UO par ID
 router.get("/:id", async (req, res) => {
   try {
@@ -138,6 +152,14 @@ router.patch("/:id/activation", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { actif, utilisateurId } = req.body;
+
+    if (actif === false) {
+      const demandesCount = await prisma.demande.count({ where: { uniteOrganisationnelleId: id } });
+      if (demandesCount > 0) {
+        return res.status(409).json({ error: `Impossible de désactiver : ${demandesCount} demande(s) sont liées à cette unité organisationnelle.` });
+      }
+    }
+
     const uo = await prisma.uniteOrganisationnelle.update({
       where: { id },
       data: { actif }

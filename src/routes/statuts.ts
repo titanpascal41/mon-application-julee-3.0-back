@@ -115,6 +115,13 @@ router.put("/:id", async (req, res) => {
       return res.status(409).json({ error: `Un statut nommé "${nom.trim()}" existe déjà.` });
     }
 
+    if (actif === false || actif === "false") {
+      const demandesCount = await prisma.demande.count({ where: { statutId: parseInt(id) } });
+      if (demandesCount > 0) {
+        return res.status(409).json({ error: `Impossible de désactiver : ${demandesCount} demande(s) utilisent ce statut.` });
+      }
+    }
+
     const statut = await prisma.statut.update({
       where: { id: parseInt(id) },
       data: { nom: nom.trim(), description, actif: actif ?? true }

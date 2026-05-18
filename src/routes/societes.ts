@@ -30,15 +30,21 @@ router.patch("/:id", async (req, res) => {
     const { id } = req.params;
     const { actif, departement, nom } = req.body;
 
-    // Bloquer la désactivation si la société est liée à une UO
     if (actif === false) {
-      const uoCount = await prisma.uniteOrganisationnelle.count({
-        where: { societeId: parseInt(id) }
-      });
+      const uoCount = await prisma.uniteOrganisationnelle.count({ where: { societeId: parseInt(id) } });
       if (uoCount > 0) {
-        return res.status(409).json({
-          message: `Impossible de désactiver cette société : elle est attribuée à ${uoCount} unité(s) organisationnelle(s).`
-        });
+        return res.status(409).json({ error: `Impossible de désactiver : ${uoCount} unité(s) organisationnelle(s) sont rattachées à cette société.` });
+      }
+      const soc = await prisma.societe.findUnique({ where: { id: parseInt(id) } });
+      if (soc) {
+        const rowsDemandes = await prisma.$queryRawUnsafe<{ cnt: bigint }[]>(
+          `SELECT COUNT(*) as cnt FROM demandes WHERE societeDemandeur = ? OR societesDemandeurs LIKE ?`,
+          soc.nom, `%${soc.nom}%`
+        );
+        const demandesCount = Number(rowsDemandes[0]?.cnt ?? 0);
+        if (demandesCount > 0) {
+          return res.status(409).json({ error: `Impossible de désactiver : ${demandesCount} demande(s) sont liées à cette société.` });
+        }
       }
     }
 
@@ -179,10 +185,19 @@ router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     const societe = await prisma.societe.findUnique({ where: { id: parseInt(id) } });
 
-    // Vérifier qu'aucune demande n'est liée
-    const demandesLiees = await (prisma as any).demande.count({ where: { societeId: parseInt(id) } });
-    if (demandesLiees > 0) {
-      return res.status(409).json({ error: `Impossible de supprimer : ${demandesLiees} demande(s) sont liées à cette société.` });
+    if (societe) {
+      const rowsDel = await prisma.$queryRawUnsafe<{ cnt: bigint }[]>(
+        `SELECT COUNT(*) as cnt FROM demandes WHERE societeDemandeur = ? OR societesDemandeurs LIKE ?`,
+        societe.nom, `%${societe.nom}%`
+      );
+      const demandesLiees = Number(rowsDel[0]?.cnt ?? 0);
+      if (demandesLiees > 0) {
+        return res.status(409).json({ error: `Impossible de supprimer : ${demandesLiees} demande(s) sont liées à cette société.` });
+      }
+    }
+    const uoLiees = await prisma.uniteOrganisationnelle.count({ where: { societeId: parseInt(id) } });
+    if (uoLiees > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${uoLiees} unité(s) organisationnelle(s) sont rattachées à cette société.` });
     }
 
     await prisma.societe.delete({ where: { id: parseInt(id) } });
