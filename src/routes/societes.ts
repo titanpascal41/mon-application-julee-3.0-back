@@ -142,13 +142,20 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: "Le code de la société est requis" });
     }
 
+    const codeUp = code.trim().toUpperCase();
+    const dept = departement || null;
+
+    // Vérifier doublon code+département (exclure la société elle-même)
+    const doublon = await prisma.societe.findFirst({
+      where: { code: codeUp, departement: dept, NOT: { id: parseInt(id) } }
+    });
+    if (doublon) {
+      return res.status(409).json({ error: `La société "${codeUp}"${dept ? ` (${dept})` : ""} existe déjà.` });
+    }
+
     const societe = await prisma.societe.update({
       where: { id: parseInt(id) },
-      data: {
-        code: code.trim().toUpperCase(),
-        nom: nom.trim(),
-        departement: departement || null
-      }
+      data: { code: codeUp, nom: nom.trim(), departement: dept }
     });
 
     await logAudit({
@@ -171,6 +178,13 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const societe = await prisma.societe.findUnique({ where: { id: parseInt(id) } });
+
+    // Vérifier qu'aucune demande n'est liée
+    const demandesLiees = await (prisma as any).demande.count({ where: { societeId: parseInt(id) } });
+    if (demandesLiees > 0) {
+      return res.status(409).json({ error: `Impossible de supprimer : ${demandesLiees} demande(s) sont liées à cette société.` });
+    }
+
     await prisma.societe.delete({ where: { id: parseInt(id) } });
     await logAudit({
       action: "SUPPRESSION",
