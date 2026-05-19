@@ -36,6 +36,10 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
+    if (utilisateur.actif === false) {
+      return res.status(403).json({ error: "Votre compte est désactivé. Contactez l'administrateur." });
+    }
+
     // Vérifier que le profil est actif
     if (utilisateur.profil && utilisateur.profil.actif === false) {
       return res.status(403).json({ error: "Votre profil est désactivé. Contactez l'administrateur." });
@@ -89,7 +93,7 @@ router.get("/", requireAuth, async (_req, res) => {
         prenom: true,
         email: true,
         profilId: true,
-        // Ne PAS inclure le mot de passe dans la liste
+        actif: true,
       },
     });
     res.status(200).json(utilisateurs);
@@ -214,6 +218,30 @@ router.put("/:id", requireAuth, async (req, res) => {
     res.status(200).json(utilisateurSansPassword);
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Activer / désactiver un utilisateur
+router.patch("/:id/activation", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { actif } = req.body;
+    const utilisateur = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { actif },
+      select: { id: true, nom: true, prenom: true, email: true, profilId: true, actif: true },
+    });
+    await logAudit({
+      action: actif ? "REACTIVATION" : "DESACTIVATION",
+      entite: "Utilisateur",
+      entiteId: utilisateur.id,
+      entiteNom: `${utilisateur.prenom} ${utilisateur.nom}`,
+      utilisateurId: (req as any).user?.id ?? null,
+    });
+    res.status(200).json(utilisateur);
+  } catch (error) {
+    console.error("Erreur activation utilisateur:", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
