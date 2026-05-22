@@ -98,7 +98,7 @@ model UniteOrganisationnelle {
   code          String?
   nom           String
   departement   String?
-  chefUO        String
+  chefUO        String?
   actif         Boolean @default(true)
   societeId     Int?
   projetSoumis  String?

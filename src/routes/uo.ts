@@ -60,6 +60,9 @@ router.post("/", async (req, res) => {
     if (!nom || !nom.trim()) {
       return res.status(400).json({ error: "Le libellé du service est requis" });
     }
+    if (!chefUO || !chefUO.trim()) {
+      return res.status(400).json({ error: "Le chef de l'UO est requis" });
+    }
 
     // Vérifier unicité code + societeId (si code fourni)
     if (code && code.trim() && societeId) {
@@ -125,7 +128,7 @@ router.put("/:id", async (req, res) => {
         code: code ? code.trim().toUpperCase() : null,
         nom: nom.trim(),
         departement: departement || null,
-        ...(chefUO !== undefined && { chefUO: chefUO.trim() }),
+        ...(chefUO !== undefined && { chefUO: chefUO ? chefUO.trim() : null }),
         ...(actif !== undefined && { actif: actif === true || actif === "true" }),
         ...(societeId && { societeId: parseInt(societeId) }),
         ...(projetSoumis !== undefined && { projetSoumis }),
