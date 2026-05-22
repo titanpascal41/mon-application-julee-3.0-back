@@ -17,7 +17,7 @@ router.get("/", async (_req, res) => {
 
     let userMap: Record<number, string> = {};
     if (userIds.length > 0) {
-      const users = await (prisma as any).utilisateur.findMany({
+      const users = await prisma.user.findMany({
         where: { id: { in: userIds } },
         select: { id: true, prenom: true, nom: true },
       });
