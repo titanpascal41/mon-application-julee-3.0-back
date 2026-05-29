@@ -164,6 +164,18 @@ async function ensureDefaultStatuts() {
   }
 }
 
+async function activerSocietesParDefaut() {
+  try {
+    const result = await (prisma as any).societe.updateMany({
+      where: { actif: false },
+      data: { actif: true }
+    });
+    if (result.count > 0) console.log(`✅ ${result.count} société(s) réactivée(s) par défaut`);
+  } catch (e) {
+    console.error("❌ Erreur réactivation sociétés:", e);
+  }
+}
+
 async function startServer() {
   try {
     // Attendre un peu pour que la connexion à la base de données s'établisse
@@ -174,6 +186,9 @@ async function startServer() {
 
     // Créer l'utilisateur admin s'il n'existe pas
     await ensureAdminExists();
+
+    // Réactiver toutes les sociétés par défaut (demande PMO)
+    await activerSocietesParDefaut();
 
     // Créer les statuts par défaut s'il n'y en a aucun
     await ensureDefaultStatuts();
