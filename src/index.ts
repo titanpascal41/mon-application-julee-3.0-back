@@ -164,27 +164,6 @@ async function ensureDefaultStatuts() {
   }
 }
 
-async function fixAllActif() {
-  try {
-    const tables = [
-      { model: "societe",               label: "société(s)" },
-      { model: "uniteOrganisationnelle", label: "UO(s)" },
-      { model: "statut",                label: "statut(s)" },
-      { model: "interlocuteur",         label: "interlocuteur(s)" },
-      { model: "profil",                label: "profil(s)" },
-    ];
-    for (const { model, label } of tables) {
-      const result = await (prisma as any)[model].updateMany({
-        where: { actif: false },
-        data: { actif: true }
-      });
-      if (result.count > 0) console.log(`✅ ${result.count} ${label} réactivé(s) par défaut`);
-    }
-  } catch (e) {
-    console.error("❌ Erreur fix actif:", e);
-  }
-}
-
 async function startServer() {
   try {
     // Attendre un peu pour que la connexion à la base de données s'établisse
@@ -195,9 +174,6 @@ async function startServer() {
 
     // Créer l'utilisateur admin s'il n'existe pas
     await ensureAdminExists();
-
-    // Réactiver toutes les entités inactives par défaut (sociétés, UO, statuts, interlocuteurs, profils)
-    await fixAllActif();
 
     // Créer les statuts par défaut s'il n'y en a aucun
     await ensureDefaultStatuts();
