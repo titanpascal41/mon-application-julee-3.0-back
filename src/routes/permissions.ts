@@ -4,6 +4,7 @@ import { prisma } from "../db";
 const router = Router();
 
 const DEFAULT_PERMISSIONS = [
+  { module: "tableau",        submodule: null,              access: true,  create: false, read: true, update: false, delete: false },
   { module: "administration", submodule: "profils",         access: false, create: false, read: true, update: false, delete: false },
   { module: "administration", submodule: "utilisateurs",    access: false, create: false, read: true, update: false, delete: false },
   { module: "parametrage",    submodule: "societes",        access: false, create: false, read: true, update: false, delete: false },
