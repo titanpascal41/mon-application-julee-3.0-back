@@ -13,7 +13,7 @@ const getUid = (req: any): number | null => {
 router.get("/", async (_req, res) => {
   try {
     const uos = await prisma.uniteOrganisationnelle.findMany({
-      orderBy: { nom: "asc" },
+      orderBy: { id: "desc" },
     });
     res.json(uos);
   } catch (error) {

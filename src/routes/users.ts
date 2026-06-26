@@ -2,48 +2,102 @@ import { Router } from "express";
 import { prisma } from "../db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
+import { z } from "zod";
 import { requireAuth, JWT_SECRET } from "../middleware/auth";
 import { logAudit } from "../utils/auditHelper";
 
 const SALT_ROUNDS = 10;
+const MAX_LOGIN_ATTEMPTS = 5;
+// Verrouillage progressif : 5 min au 1er cycle de 5 échecs, 15 min au 2e, 30 min au 3e et suivants
+const LOCKOUT_DURATIONS_MIN = [5, 15, 30];
 
 const router = Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Trop de tentatives de connexion. Réessayez dans 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginSchema = z.object({
+  email: z.email("Email invalide"),
+  motDePasse: z.string().min(1, "Mot de passe requis"),
+});
+
+const createUserSchema = z.object({
+  nom: z.string().min(1, "Nom requis"),
+  prenom: z.string().min(1, "Prénom requis"),
+  email: z.email("Email invalide"),
+  motDePasse: z.string().min(6, "Mot de passe trop court (6 caractères minimum)"),
+  profilId: z.coerce.number().int().positive(),
+});
+
 // Endpoint de connexion
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
-    const { email, motDePasse } = req.body;
-
-    // Validation
-    if (!email || !motDePasse) {
-      return res.status(400).json({ error: "Email et mot de passe requis" });
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
     }
+    const { email, motDePasse } = parsed.data;
 
-    // Chercher l'utilisateur par email (avec le profil)
     const utilisateur = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: { profil: true },
     });
 
     if (!utilisateur) {
-      console.log("Utilisateur non trouvé");
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
-    // Vérifier le mot de passe avec bcrypt
-    const passwordMatch = await bcrypt.compare(motDePasse, utilisateur.motDePasse);
-    if (!passwordMatch) {
-      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+    // Vérifier si le compte est temporairement bloqué
+    if (utilisateur.loginBloqueJusqu && utilisateur.loginBloqueJusqu > new Date()) {
+      const restant = Math.ceil((utilisateur.loginBloqueJusqu.getTime() - Date.now()) / 60000);
+      return res.status(423).json({ error: `Compte bloqué. Réessayez dans ${restant} minute(s).` });
     }
 
     if (utilisateur.actif === false) {
       return res.status(403).json({ error: "Votre compte est désactivé. Contactez l'administrateur." });
     }
 
-    // Vérifier que le profil est actif
     if (utilisateur.profil && utilisateur.profil.actif === false) {
       return res.status(403).json({ error: "Votre profil est désactivé. Contactez l'administrateur." });
     }
+
+    const passwordMatch = await bcrypt.compare(motDePasse, utilisateur.motDePasse);
+    if (!passwordMatch) {
+      const tentatives = utilisateur.loginTentatives + 1;
+
+      if (tentatives >= MAX_LOGIN_ATTEMPTS) {
+        const niveau = utilisateur.loginLockoutLevel;
+        const dureeMin = LOCKOUT_DURATIONS_MIN[Math.min(niveau, LOCKOUT_DURATIONS_MIN.length - 1)];
+        await prisma.user.update({
+          where: { id: utilisateur.id },
+          data: {
+            loginTentatives: 0, // repart à zéro pour le prochain cycle de 5 tentatives
+            loginBloqueJusqu: new Date(Date.now() + dureeMin * 60 * 1000),
+            loginLockoutLevel: niveau + 1,
+          },
+        });
+        return res.status(423).json({ error: `Compte bloqué ${dureeMin} minutes suite à trop d'échecs.` });
+      }
+
+      await prisma.user.update({
+        where: { id: utilisateur.id },
+        data: { loginTentatives: tentatives },
+      });
+      const restantes = MAX_LOGIN_ATTEMPTS - tentatives;
+      return res.status(401).json({ error: `Email ou mot de passe incorrect. ${restantes} tentative(s) restante(s).` });
+    }
+
+    // Succès — réinitialiser le compteur et l'escalade de verrouillage
+    await prisma.user.update({
+      where: { id: utilisateur.id },
+      data: { loginTentatives: 0, loginBloqueJusqu: null, loginLockoutLevel: 0 },
+    });
 
     const { motDePasse: _, ...utilisateurSansPassword } = utilisateur;
 
@@ -87,6 +141,7 @@ router.get("/", requireAuth, async (_req, res) => {
         // Masquer l'utilisateur admin (profilId: 1 pour le profil "Administrateur")
         profilId: { not: 1 }
       },
+      orderBy: { id: "desc" },
       select: {
         id: true,
         nom: true,
@@ -106,17 +161,12 @@ router.get("/", requireAuth, async (_req, res) => {
 // Créer un nouvel utilisateur
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const { nom, prenom, email, motDePasse, profilId } =
-      req.body;
-
-    // Validation
-    if (!nom || !prenom || !email || !motDePasse || !profilId) {
-      return res
-        .status(400)
-        .json({ error: "Tous les champs sont obligatoires" });
+    const parsed = createUserSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
     }
+    const { nom, prenom, email, motDePasse, profilId } = parsed.data;
 
-    // Vérifier si l'email existe déjà
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -132,7 +182,7 @@ router.post("/", requireAuth, async (req, res) => {
         prenom: prenom.trim(),
         email: email.toLowerCase().trim(),
         motDePasse: hashedPassword,
-        profilId: parseInt(profilId),
+        profilId,
       },
     });
 

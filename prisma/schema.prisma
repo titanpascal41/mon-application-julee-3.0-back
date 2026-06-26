@@ -8,16 +8,19 @@ datasource db {
 }
 
 model User {
-  id          Int     @id @default(autoincrement())
-  prenom      String
-  nom         String
-  email       String  @unique
-  motDePasse  String
-  profilId    Int
-  actif       Boolean @default(true)
-  avatar      String? @db.Text
-  demandes    Demande[]
-  profil      Profil  @relation(fields: [profilId], references: [id])
+  id                Int       @id @default(autoincrement())
+  prenom            String
+  nom               String
+  email             String    @unique
+  motDePasse        String
+  profilId          Int
+  actif             Boolean   @default(true)
+  avatar            String?   @db.Text
+  loginTentatives   Int       @default(0)
+  loginBloqueJusqu  DateTime?
+  loginLockoutLevel Int       @default(0)
+  demandes          Demande[]
+  profil            Profil    @relation(fields: [profilId], references: [id])
 
   @@map("users")
 }
@@ -47,7 +50,24 @@ model Societe {
   dateCreation     DateTime @default(now())
   dateModification DateTime @updatedAt
   demandes         Demande[]
+  departements     Departement[]
   @@map("societes")
+}
+
+model Departement {
+  id               Int      @id @default(autoincrement())
+  code             String
+  nom              String
+  actif            Boolean  @default(true)
+  societeId        Int
+  societe          Societe         @relation(fields: [societeId], references: [id])
+  interlocuteurs   Interlocuteur[]
+  dateCreation     DateTime @default(now())
+  dateModification DateTime @updatedAt
+
+  @@unique([nom, societeId])
+  @@unique([code, societeId])
+  @@map("departements")
 }
 
 model Statut {
@@ -65,15 +85,15 @@ model Statut {
 }
 
 model Interlocuteur {
-  id               Int      @id @default(autoincrement())
+  id               Int          @id @default(autoincrement())
   nom              String
-  email            String   @unique
+  email            String       @unique
   telephone        String?
-  actif            Boolean  @default(true)
-  structureUO      String?
-  uoId             Int?
-  dateCreation     DateTime @default(now())
-  dateModification DateTime @updatedAt
+  actif            Boolean      @default(true)
+  departementId    Int?
+  departement      Departement? @relation(fields: [departementId], references: [id])
+  dateCreation     DateTime     @default(now())
+  dateModification DateTime     @updatedAt
   @@map("interlocuteurs")
 }
 
@@ -171,6 +191,17 @@ model Demande {
   slt                          String?   @db.Text
   aleasNormeParJour            String?
   charge                       Float?
+
+  // Champs spécifiques Demande Prospecte - étape 2
+  dateLimiteReponseDev         DateTime?
+  dateLimiteReponseTif         DateTime?
+  chargeDeveloppement          Float?
+  chargeTIF                    Float?
+  motifEcartChargeTIF          String?
+  chargeSupportRecette         Float?
+  chargeGlobale                Float?
+  tarifHommeJour               Float?
+  budgetAlloue                 Float?
 
   // Suspension
   motifSuspension              String?

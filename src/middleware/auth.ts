@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "julee_secret_key_change_in_production_2024";
+const JWT_SECRET = process.env.JWT_SECRET as string;
+if (!JWT_SECRET) {
+  console.error("ERREUR: le JWT_SECRET est absent dans le env");
+  process.exit(1);
+}
 
 export interface AuthRequest extends Request {
   userId?: number;
@@ -9,7 +13,11 @@ export interface AuthRequest extends Request {
   userProfilNom?: string;
 }
 
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+export function requireAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Authentification requise" });
@@ -27,11 +35,17 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   }
 }
 
-export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+export function requireAdmin(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   requireAuth(req, res, () => {
     const nom = (req.userProfilNom || "").toLowerCase();
     if (nom !== "admin" && nom !== "administrateur") {
-      return res.status(403).json({ error: "Accès réservé aux administrateurs" });
+      return res
+        .status(403)
+        .json({ error: "Accès réservé aux administrateurs" });
     }
     next();
   });

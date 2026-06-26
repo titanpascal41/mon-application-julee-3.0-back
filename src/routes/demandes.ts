@@ -156,6 +156,16 @@ router.post("/", async (req, res) => {
       statutTIF,
       motifSuspension,
       dateSuspension,
+      // Demande Prospecte - étape 2
+      dateLimiteReponseDev,
+      dateLimiteReponseTif,
+      chargeDeveloppement,
+      chargeTIF,
+      motifEcartChargeTIF,
+      chargeSupportRecette,
+      chargeGlobale,
+      tarifHommeJour,
+      budgetAlloue,
     } = req.body;
 
     console.log("🔍 Backend POST - Données reçues:", {
@@ -274,6 +284,16 @@ router.post("/", async (req, res) => {
         }),
         ...(motifsRetardTIF !== undefined && motifsRetardTIF !== null && { motifsRetardTIF }),
         ...(motifsRetardClient !== undefined && motifsRetardClient !== null && { motifsRetardClient }),
+        // Demande Prospecte - étape 2
+        ...(dateLimiteReponseDev !== undefined && dateLimiteReponseDev !== null && { dateLimiteReponseDev: new Date(dateLimiteReponseDev) }),
+        ...(dateLimiteReponseTif !== undefined && dateLimiteReponseTif !== null && { dateLimiteReponseTif: new Date(dateLimiteReponseTif) }),
+        ...(chargeDeveloppement !== undefined && chargeDeveloppement !== null && { chargeDeveloppement: parseFloat(chargeDeveloppement) }),
+        ...(chargeTIF !== undefined && chargeTIF !== null && { chargeTIF: parseFloat(chargeTIF) }),
+        ...(motifEcartChargeTIF !== undefined && motifEcartChargeTIF !== null && { motifEcartChargeTIF }),
+        ...(chargeSupportRecette !== undefined && chargeSupportRecette !== null && { chargeSupportRecette: parseFloat(chargeSupportRecette) }),
+        ...(chargeGlobale !== undefined && chargeGlobale !== null && { chargeGlobale: parseFloat(chargeGlobale) }),
+        ...(tarifHommeJour !== undefined && tarifHommeJour !== null && { tarifHommeJour: parseFloat(tarifHommeJour) }),
+        ...(budgetAlloue !== undefined && budgetAlloue !== null && { budgetAlloue: parseFloat(budgetAlloue) }),
       },
     });
 
@@ -357,6 +377,16 @@ router.put("/:id", async (req, res) => {
       statutTIF,
       motifSuspension,
       dateSuspension,
+      // Demande Prospecte - étape 2
+      dateLimiteReponseDev,
+      dateLimiteReponseTif,
+      chargeDeveloppement,
+      chargeTIF,
+      motifEcartChargeTIF,
+      chargeSupportRecette,
+      chargeGlobale,
+      tarifHommeJour,
+      budgetAlloue,
     } = req.body;
 
     console.log("🔍 Backend PUT - Données reçues:", {
@@ -479,6 +509,16 @@ router.put("/:id", async (req, res) => {
         ...(lienIngridPointsControleTIF !== undefined && lienIngridPointsControleTIF !== null && { lienIngridPointsControleTIF }),
         ...(lienIngridSignoff !== undefined && lienIngridSignoff !== null && { lienIngridSignoff }),
         ...(statutTIF !== undefined && statutTIF !== null && { statutTIF }),
+        // Demande Prospecte - étape 2
+        ...(dateLimiteReponseDev !== undefined && dateLimiteReponseDev !== null && { dateLimiteReponseDev: new Date(dateLimiteReponseDev) }),
+        ...(dateLimiteReponseTif !== undefined && dateLimiteReponseTif !== null && { dateLimiteReponseTif: new Date(dateLimiteReponseTif) }),
+        ...(chargeDeveloppement !== undefined && chargeDeveloppement !== null && { chargeDeveloppement: parseFloat(chargeDeveloppement) }),
+        ...(chargeTIF !== undefined && chargeTIF !== null && { chargeTIF: parseFloat(chargeTIF) }),
+        ...(motifEcartChargeTIF !== undefined && { motifEcartChargeTIF: motifEcartChargeTIF || null }),
+        ...(chargeSupportRecette !== undefined && chargeSupportRecette !== null && { chargeSupportRecette: parseFloat(chargeSupportRecette) }),
+        ...(chargeGlobale !== undefined && chargeGlobale !== null && { chargeGlobale: parseFloat(chargeGlobale) }),
+        ...(tarifHommeJour !== undefined && tarifHommeJour !== null && { tarifHommeJour: parseFloat(tarifHommeJour) }),
+        ...(budgetAlloue !== undefined && budgetAlloue !== null && { budgetAlloue: parseFloat(budgetAlloue) }),
         dateModification: new Date(),
       },
     });

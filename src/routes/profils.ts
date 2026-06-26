@@ -14,7 +14,7 @@ router.get("/", async (_req, res) => {
   try {
     const profils = await prisma.profil.findMany({
       where: { nom: { not: "admin" } },
-      orderBy: { id: "asc" },
+      orderBy: { id: "desc" },
     });
     res.json(profils);
   } catch (error) {

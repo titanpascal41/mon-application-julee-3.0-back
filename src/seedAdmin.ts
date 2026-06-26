@@ -2,9 +2,17 @@ import { prisma } from './db';
 import bcrypt from 'bcrypt';
 
 export async function seedAdminUser() {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.error('❌ ERREUR : ADMIN_EMAIL et ADMIN_PASSWORD sont requis dans le fichier .env');
+    process.exit(1);
+  }
+
   try {
     console.log('🔍 Vérification de l\'utilisateur admin au démarrage...');
-    
+
     // Vérifier si le profil admin existe
     let adminProfil = await prisma.profil.findUnique({
       where: { nom: 'admin' }
@@ -23,7 +31,7 @@ export async function seedAdminUser() {
 
     // Vérifier si l'utilisateur admin existe déjà
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'admin@julee.local' }
+      where: { email: adminEmail }
     });
 
     if (existingAdmin) {
@@ -33,13 +41,13 @@ export async function seedAdminUser() {
 
     // Créer l'utilisateur admin
     console.log('➕ Création de l\'utilisateur admin...');
-    
-    const hashedPassword = await bcrypt.hash('JuleeAdmin@2024!', 10);
+
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
     const adminUser = await prisma.user.create({
       data: {
         prenom: 'Admin',
         nom: 'Julee',
-        email: 'admin@julee.local',
+        email: adminEmail,
         motDePasse: hashedPassword,
         profilId: adminProfil.id
       }

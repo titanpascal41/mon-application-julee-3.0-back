@@ -11,6 +11,7 @@ const DEFAULT_PERMISSIONS = [
   { module: "parametrage",    submodule: "uo",              access: false, create: false, read: true, update: false, delete: false },
   { module: "parametrage",    submodule: "statuts",         access: false, create: false, read: true, update: false, delete: false },
   { module: "parametrage",    submodule: "interlocuteurs",  access: false, create: false, read: true, update: false, delete: false },
+  { module: "parametrage",    submodule: "departements",    access: false, create: false, read: true, update: false, delete: false },
   { module: "demandes",       submodule: "gestion",         access: false, create: false, read: true, update: false, delete: false },
 ];
 

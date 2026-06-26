@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { config } from "dotenv";
-import { requireDbReady } from "./db";
 import profilsRoutes from "./routes/profils";
 import societesRoutes from "./routes/societes";
 import interlocuteursRoutes from "./routes/interlocuteurs";
@@ -28,7 +27,6 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
-app.use(requireDbReady);
 
 app.get("/", (_req, res) => {
   res.send("Serveur Node.js + TypeScript opérationnel !");

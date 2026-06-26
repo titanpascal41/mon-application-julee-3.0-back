@@ -13,7 +13,8 @@ const getUid = (req: any): number | null => {
 router.get("/", async (_req, res) => {
   try {
     const interlocuteurs = await prisma.interlocuteur.findMany({
-      orderBy: { id: "asc" }
+      orderBy: { id: "desc" },
+      include: { departement: { include: { societe: { select: { id: true, code: true, nom: true } } } } },
     });
     return res.json(interlocuteurs);
   } catch (error) {
@@ -58,7 +59,7 @@ router.get("/:id", async (req, res) => {
 // CREATE interlocuteur
 router.post("/", async (req, res) => {
   try {
-    const { nom, email, telephone, actif, structureUO, uoId } = req.body;
+    const { nom, email, telephone, actif, departementId } = req.body;
 
     if (!nom || !nom.trim()) {
       return res.status(400).json({ error: "Le nom de l'interlocuteur est requis" });
@@ -78,8 +79,7 @@ router.post("/", async (req, res) => {
         email: email.trim(),
         telephone: telephone || null,
         actif: actif ?? true,
-        structureUO: structureUO || null,
-        uoId: uoId ? parseInt(uoId) : null,
+        departementId: departementId ? parseInt(departementId) : null,
       }
     });
 
@@ -103,7 +103,7 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom, email, telephone, actif, structureUO, uoId } = req.body;
+    const { nom, email, telephone, actif, departementId } = req.body;
 
     if (!nom || !nom.trim()) {
       return res.status(400).json({ error: "Le nom de l'interlocuteur est requis" });
@@ -126,8 +126,7 @@ router.put("/:id", async (req, res) => {
         email: email.trim(),
         telephone: telephone || null,
         actif: actif ?? true,
-        structureUO: structureUO || null,
-        uoId: uoId ? parseInt(uoId) : null,
+        departementId: departementId ? parseInt(departementId) : null,
       }
     });
 

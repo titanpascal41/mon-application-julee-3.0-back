@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     const all = req.query.all === "true";
     const societes = await prisma.societe.findMany({
       where: all ? undefined : { actif: true },
-      orderBy: { id: "asc" }
+      orderBy: { id: "desc" }
     });
     return res.json(societes);
   } catch (error) {

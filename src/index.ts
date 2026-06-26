@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
 import { config } from "dotenv";
 import { ensureAdminExists } from "./seedAdmin";
 import { prisma } from "./db";
@@ -12,12 +14,16 @@ import demandesRoutes from "./routes/demandes";
 import uoRoutes from "./routes/uo";
 import permissionsRoutes from "./routes/permissions";
 import auditRoutes from "./routes/audit";
+import departementsRoutes from "./routes/departements";
 import { requireAuth } from "./middleware/auth";
 
 config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+app.use(helmet());
+app.use(morgan("combined"));
 
 const ALLOWED_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
@@ -49,6 +55,7 @@ app.use("/demandes", requireAuth, demandesRoutes);
 app.use("/uo", requireAuth, uoRoutes);
 app.use("/permissions", requireAuth, permissionsRoutes);
 app.use("/audit", requireAuth, auditRoutes);
+app.use("/departements", requireAuth, departementsRoutes);
 
 // Fonction de démarrage du serveur avec création de l'admin
 async function createVueProfilsPermissions() {
